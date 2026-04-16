@@ -85,6 +85,25 @@ export interface AdminUsageQueryParams extends UsageQueryParams {
   sort_order?: 'asc' | 'desc'
 }
 
+export interface UsageRequestConversationSnapshot {
+  sequence: number
+  stage: string
+  kind?: string
+  payload: string
+  platform?: string
+  account_id?: number | null
+  account_name?: string
+  upstream_url?: string
+}
+
+export interface UsageRequestConversationResponse {
+  usage_log_id: number
+  request_id: string
+  user_id: number
+  api_key_id: number
+  snapshots: UsageRequestConversationSnapshot[]
+}
+
 // ==================== API Functions ====================
 
 /**
@@ -125,6 +144,20 @@ export async function getStats(params: {
     params
   })
   return data
+}
+
+/**
+ * Get full inbound request payload by usage log ID (admin only)
+ * @param usageLogID - Usage log ID
+ * @returns request conversation payload
+ */
+export async function getRequestConversation(usageLogID: number): Promise<UsageRequestConversationResponse> {
+  const { data } = await apiClient.get<{
+    code: number
+    message: string
+    data: UsageRequestConversationResponse
+  }>(`/admin/usage/${usageLogID}/request-conversation`)
+  return data.data
 }
 
 /**
@@ -199,6 +232,7 @@ export async function cancelCleanupTask(taskId: number): Promise<{ id: number; s
 export const adminUsageAPI = {
   list,
   getStats,
+  getRequestConversation,
   searchUsers,
   searchApiKeys,
   listCleanupTasks,

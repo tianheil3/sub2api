@@ -109,6 +109,7 @@
         :default-sort-order="'desc'"
         @sort="handleSort"
         @userClick="handleUserClick"
+        @viewConversation="handleViewConversation"
       />
       <Pagination v-if="pagination.total > 0" :page="pagination.page" :total="pagination.total" :page-size="pagination.page_size" @update:page="handlePageChange" @update:pageSize="handlePageSizeChange" />
     </div>
@@ -128,6 +129,60 @@
     :hide-actions="true"
     @close="showBalanceHistoryModal = false; balanceHistoryUser = null"
   />
+  <BaseDialog
+    :show="showRequestConversationModal"
+    :title="t('admin.usage.requestConversationTitle')"
+    width="full"
+    @close="closeRequestConversationModal"
+  >
+    <div v-if="requestConversationLoading" class="flex items-center justify-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+        <div class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('admin.usage.loadingConversation') }}</div>
+      </div>
+    </div>
+    <div v-else-if="requestConversationSnapshots.length === 0" class="py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+      {{ t('admin.usage.requestConversationEmpty') }}
+    </div>
+    <div v-else class="space-y-4">
+      <div class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-dark-700 dark:bg-dark-900 sm:grid-cols-3">
+        <div>
+          <div class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('admin.usage.requestId') }}</div>
+          <div class="mt-1 break-all font-mono text-gray-900 dark:text-gray-100">{{ requestConversationData?.request_id || '-' }}</div>
+        </div>
+        <div>
+          <div class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('admin.usage.user') }}</div>
+          <div class="mt-1 font-mono text-gray-900 dark:text-gray-100">#{{ requestConversationData?.user_id ?? '-' }}</div>
+        </div>
+        <div>
+          <div class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t('usage.apiKeyFilter') }}</div>
+          <div class="mt-1 font-mono text-gray-900 dark:text-gray-100">#{{ requestConversationData?.api_key_id ?? '-' }}</div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div
+          v-for="snapshot in requestConversationSnapshots"
+          :key="`${snapshot.sequence}-${snapshot.stage}-${snapshot.kind || 'default'}`"
+          class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-700 dark:bg-dark-900"
+        >
+          <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 px-4 py-3 text-xs dark:border-dark-700">
+            <span class="inline-flex items-center rounded-full bg-primary-100 px-2.5 py-1 font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
+              {{ formatConversationStageLabel(snapshot.stage) }}
+            </span>
+            <span v-if="snapshot.kind" class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-700 dark:bg-dark-700 dark:text-gray-200">
+              {{ snapshot.kind }}
+            </span>
+            <span v-if="snapshot.platform" class="text-gray-500 dark:text-gray-400">{{ snapshot.platform }}</span>
+            <span v-if="snapshot.account_name || snapshot.account_id" class="text-gray-500 dark:text-gray-400">
+              {{ snapshot.account_name || t('admin.usage.account') }}<template v-if="snapshot.account_id"> #{{ snapshot.account_id }}</template>
+            </span>
+            <span v-if="snapshot.upstream_url" class="break-all text-gray-500 dark:text-gray-400">{{ snapshot.upstream_url }}</span>
+          </div>
+          <pre class="max-h-[60vh] overflow-auto bg-gray-50 p-4 text-xs text-gray-800 dark:bg-dark-950 dark:text-gray-100"><code>{{ formatConversationPayload(snapshot) }}</code></pre>
+        </div>
+      </div>
+    </div>
+  </BaseDialog>
 </template>
 
 <script setup lang="ts">
@@ -147,7 +202,7 @@ import UserBalanceHistoryModal from '@/components/admin/user/UserBalanceHistoryM
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'; import GroupDistributionChart from '@/components/charts/GroupDistributionChart.vue'; import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/components/charts/EndpointDistributionChart.vue'
 import Icon from '@/components/icons/Icon.vue'
-import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/api/admin/usage'
+import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams, UsageRequestConversationResponse, UsageRequestConversationSnapshot } from '@/api/admin/usage'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -180,6 +235,13 @@ const cleanupDialogVisible = ref(false)
 // Balance history modal state
 const showBalanceHistoryModal = ref(false)
 const balanceHistoryUser = ref<AdminUser | null>(null)
+const showRequestConversationModal = ref(false)
+const requestConversationLoading = ref(false)
+const requestConversationData = ref<UsageRequestConversationResponse | null>(null)
+
+const requestConversationSnapshots = computed<UsageRequestConversationSnapshot[]>(() =>
+  requestConversationData.value?.snapshots || []
+)
 
 const breakdownFilters = computed(() => {
   const f: Record<string, any> = {}
@@ -199,6 +261,49 @@ const handleUserClick = async (userId: number) => {
     showBalanceHistoryModal.value = true
   } catch {
     appStore.showError(t('admin.usage.failedToLoadUser'))
+  }
+}
+
+const closeRequestConversationModal = () => {
+  showRequestConversationModal.value = false
+  requestConversationLoading.value = false
+  requestConversationData.value = null
+}
+
+const handleViewConversation = async (usageLogID: number) => {
+  showRequestConversationModal.value = true
+  requestConversationLoading.value = true
+  requestConversationData.value = null
+  try {
+    requestConversationData.value = await adminUsageAPI.getRequestConversation(usageLogID)
+  } catch (error) {
+    console.error('Failed to load request conversation:', error)
+    appStore.showError(t('admin.usage.failedToLoadConversation'))
+  } finally {
+    requestConversationLoading.value = false
+  }
+}
+
+const formatConversationStageLabel = (stage: string) => {
+  switch (stage) {
+    case 'inbound':
+      return t('admin.usage.requestConversationStageInbound')
+    case 'gateway_rewritten':
+      return t('admin.usage.requestConversationStageGatewayRewrite')
+    case 'upstream_retry':
+      return t('admin.usage.requestConversationStageUpstreamRetry')
+    case 'upstream_final':
+      return t('admin.usage.requestConversationStageUpstreamFinal')
+    default:
+      return stage
+  }
+}
+
+const formatConversationPayload = (snapshot: UsageRequestConversationSnapshot) => {
+  try {
+    return JSON.stringify(JSON.parse(snapshot.payload), null, 2)
+  } catch {
+    return snapshot.payload
   }
 }
 
@@ -535,6 +640,7 @@ const allColumns = computed(() => [
   { key: 'cost', label: t('usage.cost'), sortable: false },
   { key: 'first_token', label: t('usage.firstToken'), sortable: false },
   { key: 'duration', label: t('usage.duration'), sortable: false },
+  { key: 'conversation', label: t('admin.usage.viewConversation'), sortable: false },
   { key: 'created_at', label: t('usage.time'), sortable: true },
   { key: 'user_agent', label: t('usage.userAgent'), sortable: false },
   { key: 'ip_address', label: t('admin.usage.ipAddress'), sortable: false }
