@@ -146,6 +146,7 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 		h.errorResponse(c, http.StatusBadRequest, "invalid_request_error", "Request body is empty")
 		return
 	}
+	originalBody := append([]byte(nil), body...)
 
 	setOpsRequestContext(c, "", false, body)
 
@@ -464,6 +465,7 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			requestPayloadHash := service.HashUsageRequestPayload(body)
 			inboundEndpoint := GetInboundEndpoint(c)
 			upstreamEndpoint := GetUpstreamEndpoint(c, account.Platform)
+			conversationSnapshots := buildRequestConversationSnapshots(c, originalBody, body, account)
 
 			if result.ReasoningEffort == nil {
 				result.ReasoningEffort = service.NormalizeClaudeOutputEffort(parsedReq.OutputEffort)
@@ -472,20 +474,21 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			// 使用量记录通过有界 worker 池提交，避免请求热路径创建无界 goroutine。
 			h.submitUsageRecordTask(func(ctx context.Context) {
 				if err := h.gatewayService.RecordUsage(ctx, &service.RecordUsageInput{
-					Result:             result,
-					ParsedRequest:      parsedReq,
-					APIKey:             apiKey,
-					User:               apiKey.User,
-					Account:            account,
-					Subscription:       subscription,
-					InboundEndpoint:    inboundEndpoint,
-					UpstreamEndpoint:   upstreamEndpoint,
-					UserAgent:          userAgent,
-					IPAddress:          clientIP,
-					RequestPayloadHash: requestPayloadHash,
-					ForceCacheBilling:  fs.ForceCacheBilling,
-					APIKeyService:      h.apiKeyService,
-					ChannelUsageFields: channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
+					Result:                       result,
+					ParsedRequest:                parsedReq,
+					APIKey:                       apiKey,
+					User:                         apiKey.User,
+					Account:                      account,
+					Subscription:                 subscription,
+					RequestConversationSnapshots: conversationSnapshots,
+					InboundEndpoint:              inboundEndpoint,
+					UpstreamEndpoint:             upstreamEndpoint,
+					UserAgent:                    userAgent,
+					IPAddress:                    clientIP,
+					RequestPayloadHash:           requestPayloadHash,
+					ForceCacheBilling:            fs.ForceCacheBilling,
+					APIKeyService:                h.apiKeyService,
+					ChannelUsageFields:           channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
 				}); err != nil {
 					logger.L().With(
 						zap.String("component", "handler.gateway.messages"),
@@ -806,6 +809,7 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			requestPayloadHash := service.HashUsageRequestPayload(body)
 			inboundEndpoint := GetInboundEndpoint(c)
 			upstreamEndpoint := GetUpstreamEndpoint(c, account.Platform)
+			conversationSnapshots := buildRequestConversationSnapshots(c, originalBody, body, account)
 
 			if result.ReasoningEffort == nil {
 				result.ReasoningEffort = service.NormalizeClaudeOutputEffort(parsedReq.OutputEffort)
@@ -814,20 +818,21 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			// 使用量记录通过有界 worker 池提交，避免请求热路径创建无界 goroutine。
 			h.submitUsageRecordTask(func(ctx context.Context) {
 				if err := h.gatewayService.RecordUsage(ctx, &service.RecordUsageInput{
-					Result:             result,
-					ParsedRequest:      parsedReq,
-					APIKey:             currentAPIKey,
-					User:               currentAPIKey.User,
-					Account:            account,
-					Subscription:       currentSubscription,
-					InboundEndpoint:    inboundEndpoint,
-					UpstreamEndpoint:   upstreamEndpoint,
-					UserAgent:          userAgent,
-					IPAddress:          clientIP,
-					RequestPayloadHash: requestPayloadHash,
-					ForceCacheBilling:  fs.ForceCacheBilling,
-					APIKeyService:      h.apiKeyService,
-					ChannelUsageFields: channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
+					Result:                       result,
+					ParsedRequest:                parsedReq,
+					APIKey:                       currentAPIKey,
+					User:                         currentAPIKey.User,
+					Account:                      account,
+					Subscription:                 currentSubscription,
+					RequestConversationSnapshots: conversationSnapshots,
+					InboundEndpoint:              inboundEndpoint,
+					UpstreamEndpoint:             upstreamEndpoint,
+					UserAgent:                    userAgent,
+					IPAddress:                    clientIP,
+					RequestPayloadHash:           requestPayloadHash,
+					ForceCacheBilling:            fs.ForceCacheBilling,
+					APIKeyService:                h.apiKeyService,
+					ChannelUsageFields:           channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
 				}); err != nil {
 					logger.L().With(
 						zap.String("component", "handler.gateway.messages"),

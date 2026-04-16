@@ -199,6 +199,23 @@ func (h *UsageHandler) List(c *gin.Context) {
 	response.Paginated(c, out, result.Total, page, pageSize)
 }
 
+// GetRequestConversation handles fetching the full request-body version chain by usage log ID.
+// GET /api/v1/admin/usage/:id/request-conversation
+func (h *UsageHandler) GetRequestConversation(c *gin.Context) {
+	usageLogID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid usage log ID")
+		return
+	}
+
+	conversation, err := h.usageService.GetRequestConversationByUsageLogID(c.Request.Context(), usageLogID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, conversation)
+}
+
 // Stats handles getting usage statistics with filters
 // GET /api/v1/admin/usage/stats
 func (h *UsageHandler) Stats(c *gin.Context) {

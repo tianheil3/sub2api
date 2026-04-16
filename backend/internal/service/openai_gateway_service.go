@@ -4397,17 +4397,18 @@ func (s *OpenAIGatewayService) replaceModelInResponseBody(body []byte, fromModel
 
 // OpenAIRecordUsageInput input for recording usage
 type OpenAIRecordUsageInput struct {
-	Result             *OpenAIForwardResult
-	APIKey             *APIKey
-	User               *User
-	Account            *Account
-	Subscription       *UserSubscription
-	InboundEndpoint    string
-	UpstreamEndpoint   string
-	UserAgent          string // 请求的 User-Agent
-	IPAddress          string // 请求的客户端 IP 地址
-	RequestPayloadHash string
-	APIKeyService      APIKeyQuotaUpdater
+	Result                       *OpenAIForwardResult
+	APIKey                       *APIKey
+	User                         *User
+	Account                      *Account
+	Subscription                 *UserSubscription
+	RequestConversationSnapshots []RequestConversationSnapshot
+	InboundEndpoint              string
+	UpstreamEndpoint             string
+	UserAgent                    string // 请求的 User-Agent
+	IPAddress                    string // 请求的客户端 IP 地址
+	RequestPayloadHash           string
+	APIKeyService                APIKeyQuotaUpdater
 	ChannelUsageFields
 }
 
@@ -4525,6 +4526,9 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		CacheCreationTokens: result.Usage.CacheCreationInputTokens,
 		CacheReadTokens:     result.Usage.CacheReadInputTokens,
 		ImageOutputTokens:   result.Usage.ImageOutputTokens,
+	}
+	if len(input.RequestConversationSnapshots) > 0 {
+		usageLog.RequestConversationSnapshots = append([]RequestConversationSnapshot(nil), input.RequestConversationSnapshots...)
 	}
 	if cost != nil {
 		usageLog.InputCost = cost.InputCost

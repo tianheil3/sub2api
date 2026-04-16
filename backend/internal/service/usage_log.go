@@ -161,6 +161,10 @@ type UsageLog struct {
 	// Cache TTL Override 标记（管理员强制替换了缓存 TTL 计费）
 	CacheTTLOverridden bool
 
+	// RequestConversationSnapshots stores the full request-body version chain for admin troubleshooting.
+	// It is persisted in usage_log_conversations (not usage_logs) to avoid widening hot-path rows.
+	RequestConversationSnapshots []RequestConversationSnapshot
+
 	// 图片生成字段
 	ImageCount int
 	ImageSize  *string
@@ -173,6 +177,32 @@ type UsageLog struct {
 	Account      *Account
 	Group        *Group
 	Subscription *UserSubscription
+}
+
+const (
+	RequestConversationStageInbound        = "inbound"
+	RequestConversationStageGatewayRewrite = "gateway_rewritten"
+	RequestConversationStageUpstreamRetry  = "upstream_retry"
+	RequestConversationStageUpstreamFinal  = "upstream_final"
+)
+
+type RequestConversationSnapshot struct {
+	Sequence    int    `json:"sequence"`
+	Stage       string `json:"stage"`
+	Kind        string `json:"kind,omitempty"`
+	Payload     string `json:"payload"`
+	Platform    string `json:"platform,omitempty"`
+	AccountID   *int64 `json:"account_id,omitempty"`
+	AccountName string `json:"account_name,omitempty"`
+	UpstreamURL string `json:"upstream_url,omitempty"`
+}
+
+type UsageLogConversation struct {
+	UsageLogID int64                         `json:"usage_log_id"`
+	RequestID  string                        `json:"request_id"`
+	UserID     int64                         `json:"user_id"`
+	APIKeyID   int64                         `json:"api_key_id"`
+	Snapshots  []RequestConversationSnapshot `json:"snapshots"`
 }
 
 func (u *UsageLog) TotalTokens() int {

@@ -60,6 +60,7 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 		h.errorResponse(c, http.StatusBadRequest, "invalid_request_error", "Request body is empty")
 		return
 	}
+	originalBody := append([]byte(nil), body...)
 
 	if !gjson.ValidBytes(body) {
 		h.errorResponse(c, http.StatusBadRequest, "invalid_request_error", "Failed to parse request body")
@@ -263,18 +264,20 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 		clientIP := ip.GetClientIP(c)
 
 		h.submitUsageRecordTask(func(ctx context.Context) {
+			conversationSnapshots := buildRequestConversationSnapshots(c, originalBody, body, account)
 			if err := h.gatewayService.RecordUsage(ctx, &service.OpenAIRecordUsageInput{
-				Result:             result,
-				APIKey:             apiKey,
-				User:               apiKey.User,
-				Account:            account,
-				Subscription:       subscription,
-				InboundEndpoint:    GetInboundEndpoint(c),
-				UpstreamEndpoint:   GetUpstreamEndpoint(c, account.Platform),
-				UserAgent:          userAgent,
-				IPAddress:          clientIP,
-				APIKeyService:      h.apiKeyService,
-				ChannelUsageFields: channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
+				Result:                       result,
+				APIKey:                       apiKey,
+				User:                         apiKey.User,
+				Account:                      account,
+				Subscription:                 subscription,
+				RequestConversationSnapshots: conversationSnapshots,
+				InboundEndpoint:              GetInboundEndpoint(c),
+				UpstreamEndpoint:             GetUpstreamEndpoint(c, account.Platform),
+				UserAgent:                    userAgent,
+				IPAddress:                    clientIP,
+				APIKeyService:                h.apiKeyService,
+				ChannelUsageFields:           channelMapping.ToUsageFields(reqModel, result.UpstreamModel),
 			}); err != nil {
 				logger.L().With(
 					zap.String("component", "handler.openai_gateway.chat_completions"),

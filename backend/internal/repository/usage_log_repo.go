@@ -1352,12 +1352,178 @@ func (r *usageLogRepository) GetByID(ctx context.Context, id int64) (log *servic
 	return log, nil
 }
 
+func (r *usageLogRepository) ReplaceRequestConversation(ctx context.Context, requestID string, userID, apiKeyID int64, snapshots []service.RequestConversationSnapshot) error {
+	requestID = strings.TrimSpace(requestID)
+	if requestID == "" || userID <= 0 || apiKeyID <= 0 || len(snapshots) == 0 {
+		return nil
+	}
+
+	exec := r.sql
+	var tx *sql.Tx
+	if r.db != nil {
+		var err error
+		tx, err = r.db.BeginTx(ctx, nil)
+		if err != nil {
+			return err
+		}
+		exec = tx
+		defer func() {
+			_ = tx.Rollback()
+		}()
+	}
+
+	if _, err := exec.ExecContext(ctx, `DELETE FROM usage_log_conversations WHERE request_id = $1 AND api_key_id = $2`, requestID, apiKeyID); err != nil {
+		return err
+	}
+
+	const insertQuery = `
+		INSERT INTO usage_log_conversations (
+			request_id,
+			user_id,
+			api_key_id,
+			sequence,
+			stage,
+			snapshot_kind,
+			platform,
+			account_id,
+			account_name,
+			upstream_url,
+			payload,
+			created_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+	`
+	for idx := range snapshots {
+		snapshot := snapshots[idx]
+		if strings.TrimSpace(snapshot.Payload) == "" {
+			continue
+		}
+		sequence := idx + 1
+		if snapshot.Sequence > 0 {
+			sequence = snapshot.Sequence
+		}
+		if _, err := exec.ExecContext(
+			ctx,
+			insertQuery,
+			requestID,
+			userID,
+			apiKeyID,
+			sequence,
+			strings.TrimSpace(snapshot.Stage),
+			strings.TrimSpace(snapshot.Kind),
+			strings.TrimSpace(snapshot.Platform),
+			nullableInt64(snapshot.AccountID),
+			emptyToNullString(snapshot.AccountName),
+			emptyToNullString(snapshot.UpstreamURL),
+			snapshot.Payload,
+		); err != nil {
+			return err
+		}
+	}
+
+	if tx != nil {
+		return tx.Commit()
+	}
+	return nil
+}
+
+func (r *usageLogRepository) GetRequestConversationByUsageLogID(ctx context.Context, usageLogID int64) (*service.UsageLogConversation, error) {
+	const usageQuery = `
+		SELECT request_id, user_id, api_key_id
+		FROM usage_logs
+		WHERE id = $1
+	`
+
+	var (
+		requestID string
+		userID    int64
+		apiKeyID  int64
+	)
+	if err := scanSingleRow(ctx, r.sql, usageQuery, []any{usageLogID}, &requestID, &userID, &apiKeyID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, service.ErrUsageLogConversationNotFound
+		}
+		return nil, err
+	}
+
+	rows, err := r.sql.QueryContext(ctx, `
+		SELECT sequence, stage, snapshot_kind, payload, platform, account_id, account_name, upstream_url
+		FROM usage_log_conversations
+		WHERE request_id = $1 AND api_key_id = $2
+		ORDER BY sequence ASC, id ASC
+	`, requestID, apiKeyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	conversation := &service.UsageLogConversation{
+		UsageLogID: usageLogID,
+		RequestID:  requestID,
+		UserID:     userID,
+		APIKeyID:   apiKeyID,
+		Snapshots:  make([]service.RequestConversationSnapshot, 0),
+	}
+	for rows.Next() {
+		var (
+			snapshot                 service.RequestConversationSnapshot
+			accountID                sql.NullInt64
+			accountName, upstreamURL sql.NullString
+		)
+		if err := rows.Scan(
+			&snapshot.Sequence,
+			&snapshot.Stage,
+			&snapshot.Kind,
+			&snapshot.Payload,
+			&snapshot.Platform,
+			&accountID,
+			&accountName,
+			&upstreamURL,
+		); err != nil {
+			return nil, err
+		}
+		if accountID.Valid {
+			value := accountID.Int64
+			snapshot.AccountID = &value
+		}
+		if accountName.Valid {
+			snapshot.AccountName = accountName.String
+		}
+		if upstreamURL.Valid {
+			snapshot.UpstreamURL = upstreamURL.String
+		}
+		conversation.Snapshots = append(conversation.Snapshots, snapshot)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(conversation.Snapshots) == 0 {
+		return nil, service.ErrUsageLogConversationNotFound
+	}
+	return conversation, nil
+}
+
 func (r *usageLogRepository) ListByUser(ctx context.Context, userID int64, params pagination.PaginationParams) ([]service.UsageLog, *pagination.PaginationResult, error) {
 	return r.listUsageLogsWithPagination(ctx, "WHERE user_id = $1", []any{userID}, params)
 }
 
 func (r *usageLogRepository) ListByAPIKey(ctx context.Context, apiKeyID int64, params pagination.PaginationParams) ([]service.UsageLog, *pagination.PaginationResult, error) {
 	return r.listUsageLogsWithPagination(ctx, "WHERE api_key_id = $1", []any{apiKeyID}, params)
+}
+
+func nullableInt64(value *int64) any {
+	if value == nil {
+		return nil
+	}
+	return *value
+}
+
+func emptyToNullString(value string) any {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 // UserStats 用户使用统计

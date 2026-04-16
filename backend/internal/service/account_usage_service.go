@@ -79,6 +79,13 @@ type UsageLogRepository interface {
 	GetDailyStatsAggregated(ctx context.Context, userID int64, startTime, endTime time.Time) ([]map[string]any, error)
 }
 
+// UsageLogConversationRepository persists/retrieves full request-body version chains
+// keyed by usage identity (request_id + api_key_id).
+type UsageLogConversationRepository interface {
+	ReplaceRequestConversation(ctx context.Context, requestID string, userID, apiKeyID int64, snapshots []RequestConversationSnapshot) error
+	GetRequestConversationByUsageLogID(ctx context.Context, usageLogID int64) (*UsageLogConversation, error)
+}
+
 type accountWindowStatsBatchReader interface {
 	GetAccountWindowStatsBatch(ctx context.Context, accountIDs []int64, startTime time.Time) (map[int64]*usagestats.AccountStats, error)
 }

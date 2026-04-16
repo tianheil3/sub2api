@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	ErrUsageLogNotFound = infraerrors.NotFound("USAGE_LOG_NOT_FOUND", "usage log not found")
+	ErrUsageLogNotFound             = infraerrors.NotFound("USAGE_LOG_NOT_FOUND", "usage log not found")
+	ErrUsageLogConversationNotFound = infraerrors.NotFound("USAGE_LOG_CONVERSATION_NOT_FOUND", "usage log conversation not found")
 )
 
 // CreateUsageLogRequest 创建使用日志请求
@@ -153,6 +154,19 @@ func (s *UsageService) GetByID(ctx context.Context, id int64) (*UsageLog, error)
 		return nil, fmt.Errorf("get usage log: %w", err)
 	}
 	return log, nil
+}
+
+// GetRequestConversationByUsageLogID returns the full request-body version chain for a usage row.
+func (s *UsageService) GetRequestConversationByUsageLogID(ctx context.Context, usageLogID int64) (*UsageLogConversation, error) {
+	conversationRepo, ok := s.usageRepo.(UsageLogConversationRepository)
+	if !ok {
+		return nil, ErrUsageLogConversationNotFound
+	}
+	conversation, err := conversationRepo.GetRequestConversationByUsageLogID(ctx, usageLogID)
+	if err != nil {
+		return nil, fmt.Errorf("get usage log conversation: %w", err)
+	}
+	return conversation, nil
 }
 
 // ListByUser 获取用户的使用日志列表
