@@ -85,6 +85,19 @@ const createDashboardStats = (): DashboardStats => ({
   tpm: 0
 })
 
+const createLegacyDashboardStats = (): DashboardStats => {
+  const stats = {
+    ...createDashboardStats(),
+    total_account_cost: 0,
+    today_account_cost: 0,
+  }
+
+  delete (stats as Partial<DashboardStats>).total_account_cost
+  delete (stats as Partial<DashboardStats>).today_account_cost
+
+  return stats
+}
+
 describe('admin DashboardView', () => {
   beforeEach(() => {
     getSnapshotV2.mockReset()
@@ -92,7 +105,7 @@ describe('admin DashboardView', () => {
     getUserSpendingRanking.mockReset()
 
     getSnapshotV2.mockResolvedValue({
-      stats: createDashboardStats(),
+      stats: createLegacyDashboardStats(),
       trend: [],
       models: []
     })
@@ -113,7 +126,7 @@ describe('admin DashboardView', () => {
   })
 
   it('uses last 24 hours as default dashboard range', async () => {
-    mount(DashboardView, {
+    const wrapper = mount(DashboardView, {
       global: {
         stubs: {
           AppLayout: { template: '<div><slot /></div>' },
@@ -139,5 +152,6 @@ describe('admin DashboardView', () => {
       end_date: formatLocalDate(now),
       granularity: 'hour'
     }))
+    expect(wrapper.text()).toContain('$0.0000')
   })
 })

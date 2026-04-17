@@ -1413,8 +1413,8 @@ func (r *usageLogRepository) ReplaceRequestConversation(ctx context.Context, req
 			strings.TrimSpace(snapshot.Kind),
 			strings.TrimSpace(snapshot.Platform),
 			nullableInt64(snapshot.AccountID),
-			emptyToNullString(snapshot.AccountName),
-			emptyToNullString(snapshot.UpstreamURL),
+			strings.TrimSpace(snapshot.AccountName),
+			strings.TrimSpace(snapshot.UpstreamURL),
 			snapshot.Payload,
 		); err != nil {
 			return err
@@ -1455,7 +1455,7 @@ func (r *usageLogRepository) GetRequestConversationByUsageLogID(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	conversation := &service.UsageLogConversation{
 		UsageLogID: usageLogID,
@@ -1497,9 +1497,6 @@ func (r *usageLogRepository) GetRequestConversationByUsageLogID(ctx context.Cont
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	if len(conversation.Snapshots) == 0 {
-		return nil, service.ErrUsageLogConversationNotFound
-	}
 	return conversation, nil
 }
 
@@ -1516,14 +1513,6 @@ func nullableInt64(value *int64) any {
 		return nil
 	}
 	return *value
-}
-
-func emptyToNullString(value string) any {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	return value
 }
 
 // UserStats 用户使用统计

@@ -72,6 +72,7 @@ describe('GroupDistributionChart', () => {
     const rows = wrapper.findAll('tbody tr')
     expect(rows[0].text()).toContain('group-a')
     expect(rows[1].text()).toContain('group-b')
+    expect(rows[0].text()).toContain('$0.0000')
 
     const options = (wrapper.vm as any).$?.setupState.doughnutOptions
     const label = options.plugins.tooltip.callbacks.label({
@@ -102,6 +103,7 @@ describe('GroupDistributionChart', () => {
     const rows = wrapper.findAll('tbody tr')
     expect(rows[0].text()).toContain('group-b')
     expect(rows[1].text()).toContain('group-a')
+    expect(rows[0].text()).toContain('$0.0000')
 
     const options = (wrapper.vm as any).$?.setupState.doughnutOptions
     const label = options.plugins.tooltip.callbacks.label({
