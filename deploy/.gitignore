@@ -6,9 +6,13 @@
 data/
 postgres_data/
 redis_data/
+data_parallel/
+postgres_data_parallel/
+redis_data_parallel/
 
 # Environment configuration (contains sensitive information)
 .env
+.env.parallel
 
 # Backup files
 *.backup

@@ -15,8 +15,10 @@ This directory contains files for deploying Sub2API on Linux servers.
 |------|-------------|
 | `docker-compose.yml` | Docker Compose configuration (named volumes) |
 | `docker-compose.local.yml` | Docker Compose configuration (local directories, easy migration) |
+| `docker-compose.parallel.local.yml` | Second isolated Docker Compose stack with non-conflicting host ports |
 | `docker-deploy.sh` | **One-click Docker deployment script (recommended)** |
 | `.env.example` | Docker environment variables template |
+| `.env.parallel.example` | Parallel stack environment template |
 | `DOCKER.md` | Docker Hub documentation |
 | `install.sh` | One-click binary installation script |
 | `install-datamanagementd.sh` | datamanagementd 一键安装脚本 |
@@ -96,6 +98,35 @@ docker compose -f docker-compose.local.yml logs -f sub2api
 # Access Web UI
 # http://localhost:8080
 ```
+
+### Method 3: Parallel Second Stack
+
+When you need a completely separate environment on the same host, use the parallel stack:
+
+```bash
+cd deploy
+
+cp .env.parallel.example .env.parallel
+mkdir -p data_parallel postgres_data_parallel redis_data_parallel
+
+docker compose --env-file .env.parallel -f docker-compose.parallel.local.yml up -d
+docker compose --env-file .env.parallel -f docker-compose.parallel.local.yml logs -f sub2api
+```
+
+Default non-conflicting host ports:
+
+| Service | Default stack | Parallel stack |
+|---------|---------------|----------------|
+| Sub2API | `8080` | `18080` |
+| PostgreSQL | `5432` | `15432` |
+| Redis | `6379` | `16379` |
+
+Isolation details:
+
+- Separate containers: `sub2api-parallel`, `sub2api-postgres-parallel`, `sub2api-redis-parallel`
+- Separate network: `sub2api-parallel-network`
+- Separate local data directories: `data_parallel/`, `postgres_data_parallel/`, `redis_data_parallel/`
+- Separate database defaults: `sub2api_parallel` / `sub2api_parallel`
 
 ### Deployment Version Comparison
 
