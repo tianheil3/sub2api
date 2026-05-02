@@ -520,6 +520,54 @@ func (s *UsageLogRepoSuite) TestGetByID_ReturnsOpenAIWSMode() {
 	s.Require().True(got.OpenAIWSMode)
 }
 
+func (s *UsageLogRepoSuite) TestReplaceRequestConversation_AllowsEmptyOptionalFields() {
+	user := mustCreateUser(s.T(), s.client, &service.User{Email: "conversation@test.com"})
+	apiKey := mustCreateApiKey(s.T(), s.client, &service.APIKey{UserID: user.ID, Key: "sk-conversation", Name: "k"})
+	account := mustCreateAccount(s.T(), s.client, &service.Account{Name: "acc-conversation"})
+
+	log := s.createUsageLog(user, apiKey, account, 10, 20, 0.5, time.Now())
+	snapshots := []service.RequestConversationSnapshot{
+		{
+			Sequence: 1,
+			Stage:    service.RequestConversationStageInbound,
+			Payload:  `{"messages":[{"role":"user","content":"hello"}]}`,
+		},
+		{
+			Sequence:    2,
+			Stage:       service.RequestConversationStageUpstreamFinal,
+			Kind:        "success",
+			Payload:     `{"model":"gpt-5","input":"hello"}`,
+			AccountID:   &account.ID,
+			Platform:    "",
+			AccountName: "",
+			UpstreamURL: "",
+		},
+	}
+
+	err := s.repo.ReplaceRequestConversation(s.ctx, log.RequestID, user.ID, apiKey.ID, snapshots)
+	s.Require().NoError(err)
+
+	conversation, err := s.repo.GetRequestConversationByUsageLogID(s.ctx, log.ID)
+	s.Require().NoError(err)
+	s.Require().Len(conversation.Snapshots, 2)
+	s.Require().Equal("", conversation.Snapshots[1].AccountName)
+	s.Require().Equal("", conversation.Snapshots[1].UpstreamURL)
+}
+
+func (s *UsageLogRepoSuite) TestGetRequestConversationByUsageLogID_NoSnapshotsReturnsEmptyConversation() {
+	user := mustCreateUser(s.T(), s.client, &service.User{Email: "conversation-empty@test.com"})
+	apiKey := mustCreateApiKey(s.T(), s.client, &service.APIKey{UserID: user.ID, Key: "sk-conversation-empty", Name: "k"})
+	account := mustCreateAccount(s.T(), s.client, &service.Account{Name: "acc-conversation-empty"})
+
+	log := s.createUsageLog(user, apiKey, account, 10, 20, 0.5, time.Now())
+
+	conversation, err := s.repo.GetRequestConversationByUsageLogID(s.ctx, log.ID)
+	s.Require().NoError(err)
+	s.Require().Equal(log.ID, conversation.UsageLogID)
+	s.Require().Equal(log.RequestID, conversation.RequestID)
+	s.Require().Empty(conversation.Snapshots)
+}
+
 func (s *UsageLogRepoSuite) TestGetByID_ReturnsRequestTypeAndLegacyFallback() {
 	user := mustCreateUser(s.T(), s.client, &service.User{Email: "getbyid-request-type@test.com"})
 	apiKey := mustCreateApiKey(s.T(), s.client, &service.APIKey{UserID: user.ID, Key: "sk-getbyid-request-type", Name: "k"})

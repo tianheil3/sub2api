@@ -152,12 +152,8 @@ export async function getStats(params: {
  * @returns request conversation payload
  */
 export async function getRequestConversation(usageLogID: number): Promise<UsageRequestConversationResponse> {
-  const { data } = await apiClient.get<{
-    code: number
-    message: string
-    data: UsageRequestConversationResponse
-  }>(`/admin/usage/${usageLogID}/request-conversation`)
-  return data.data
+  const { data } = await apiClient.get<UsageRequestConversationResponse>(`/admin/usage/${usageLogID}/request-conversation`)
+  return data
 }
 
 /**
