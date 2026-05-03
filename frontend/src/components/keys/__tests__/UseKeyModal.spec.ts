@@ -45,9 +45,36 @@ describe('UseKeyModal', () => {
     await opencodeTab!.trigger('click')
     await nextTick()
 
+    const codeBlocks = wrapper.findAll('pre code')
+    const configBlock = codeBlocks[codeBlocks.length - 1]
+    expect(configBlock.exists()).toBe(true)
+    expect(configBlock.text()).toContain('"name": "GPT-5.4 Mini"')
+    expect(configBlock.text()).not.toContain('"name": "GPT-5.4 Nano"')
+  })
+
+  it('renders a one-click setup script for Codex config', () => {
+    const wrapper = mount(UseKeyModal, {
+      props: {
+        show: true,
+        apiKey: 'sk-test',
+        baseUrl: 'https://example.com/v1',
+        platform: 'openai'
+      },
+      global: {
+        stubs: {
+          BaseDialog: {
+            template: '<div><slot /><slot name="footer" /></div>'
+          },
+          Icon: {
+            template: '<span />'
+          }
+        }
+      }
+    })
+
     const codeBlock = wrapper.find('pre code')
     expect(codeBlock.exists()).toBe(true)
-    expect(codeBlock.text()).toContain('"name": "GPT-5.4 Mini"')
-    expect(codeBlock.text()).not.toContain('"name": "GPT-5.4 Nano"')
+    expect(codeBlock.text()).toContain('mkdir -p "$HOME/.codex"')
+    expect(codeBlock.text()).toContain('"OPENAI_API_KEY": "sk-test"')
   })
 })

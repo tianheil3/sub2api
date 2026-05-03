@@ -72,6 +72,34 @@
           </nav>
         </div>
 
+        <!-- One-click setup script -->
+        <div v-if="currentSetupScript" class="relative">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+            {{ t('keys.useKeyModal.oneClick.description') }}
+          </p>
+          <div class="bg-gray-900 dark:bg-dark-900 rounded-xl overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-dark-800 border-b border-gray-700 dark:border-dark-700">
+              <span class="text-xs text-gray-400 font-mono">{{ currentSetupScript.path }}</span>
+              <button
+                @click="copyContent(currentSetupScript.content, 'setup')"
+                class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors"
+                :class="copiedKey === 'setup'
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white'"
+              >
+                <svg v-if="copiedKey === 'setup'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                </svg>
+                {{ copiedKey === 'setup' ? t('keys.useKeyModal.copied') : t('keys.useKeyModal.copy') }}
+              </button>
+            </div>
+            <pre class="p-4 text-sm font-mono text-gray-100 overflow-x-auto"><code v-text="currentSetupScript.content"></code></pre>
+          </div>
+        </div>
+
         <!-- Code Blocks (Stacked for multi-file platforms) -->
         <div class="space-y-4">
           <div
@@ -89,19 +117,19 @@
               <div class="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-dark-800 border-b border-gray-700 dark:border-dark-700">
                 <span class="text-xs text-gray-400 font-mono">{{ file.path }}</span>
                 <button
-                  @click="copyContent(file.content, index)"
+                  @click="copyContent(file.content, `file-${index}`)"
                   class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg transition-colors"
-                  :class="copiedIndex === index
+                  :class="copiedKey === `file-${index}`
                     ? 'bg-green-500/20 text-green-400'
                     : 'bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white'"
                 >
-                  <svg v-if="copiedIndex === index" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <svg v-if="copiedKey === `file-${index}`" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                   <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                   </svg>
-                  {{ copiedIndex === index ? t('keys.useKeyModal.copied') : t('keys.useKeyModal.copy') }}
+                  {{ copiedKey === `file-${index}` ? t('keys.useKeyModal.copied') : t('keys.useKeyModal.copy') }}
                 </button>
               </div>
               <!-- Code Content -->
@@ -172,7 +200,7 @@ const emit = defineEmits<Emits>()
 const { t } = useI18n()
 const { copyToClipboard: clipboardCopy } = useClipboard()
 
-const copiedIndex = ref<number | null>(null)
+const copiedKey = ref<string | null>(null)
 const activeTab = ref<string>('unix')
 const activeClientTab = ref<string>('claude')
 
@@ -373,6 +401,113 @@ const operator = (value: string) => wrapToken('text-slate-400', value)
 const string = (value: string) => wrapToken('text-amber-200', value)
 const comment = (value: string) => wrapToken('text-slate-500', value)
 
+const doubleQuoteShell = (value: string) => value.replace(/["\\$`]/g, '\\$&')
+const singleQuotePowerShell = (value: string) => value.replace(/'/g, "''")
+const cmdValue = (value: string) => value.replace(/"/g, '""')
+
+function unixProfileScript(exports: Record<string, string>): string {
+  const lines = Object.entries(exports).map(([key, value]) => `export ${key}="${doubleQuoteShell(value)}"`)
+  return `#!/usr/bin/env bash
+set -e
+
+PROFILE="$HOME/.zshrc"
+if [ -n "$BASH_VERSION" ]; then
+  PROFILE="$HOME/.bashrc"
+fi
+
+cat >> "$PROFILE" <<'EOF'
+
+# Sub2API client configuration
+${lines.join('\n')}
+EOF
+
+${lines.join('\n')}
+echo "Sub2API configuration was added to $PROFILE and exported for this shell."`
+}
+
+function cmdProfileScript(exports: Record<string, string>): string {
+  return Object.entries(exports)
+    .map(([key, value]) => `setx ${key} "${cmdValue(value)}"`)
+    .concat('echo Sub2API configuration was saved. Open a new Command Prompt to use it.')
+    .join('\n')
+}
+
+function powershellProfileScript(exports: Record<string, string>): string {
+  return Object.entries(exports)
+    .map(([key, value]) => `[Environment]::SetEnvironmentVariable('${key}', '${singleQuotePowerShell(value)}', 'User')`)
+    .concat('Write-Host "Sub2API configuration was saved. Open a new PowerShell window to use it."')
+    .join('\n')
+}
+
+function envSetupScript(exports: Record<string, string>): FileConfig {
+  switch (activeTab.value) {
+    case 'cmd':
+      return { path: t('keys.useKeyModal.oneClick.cmdPath'), content: cmdProfileScript(exports) }
+    case 'powershell':
+      return { path: t('keys.useKeyModal.oneClick.powerShellPath'), content: powershellProfileScript(exports) }
+    default:
+      return { path: t('keys.useKeyModal.oneClick.unixPath'), content: unixProfileScript(exports) }
+  }
+}
+
+function codexSetupScript(baseUrl: string, apiKey: string, websocket: boolean): FileConfig {
+  const files = websocket ? generateOpenAIWsFiles(baseUrl, apiKey) : generateOpenAIFiles(baseUrl, apiKey)
+  const config = files[0]?.content ?? ''
+  const auth = files[1]?.content ?? ''
+
+  if (activeTab.value === 'windows') {
+    return {
+      path: t('keys.useKeyModal.oneClick.powerShellPath'),
+      content: `$codexDir = Join-Path $env:USERPROFILE '.codex'
+New-Item -ItemType Directory -Force -Path $codexDir | Out-Null
+@'
+${config}
+'@ | Set-Content -Encoding UTF8 (Join-Path $codexDir 'config.toml')
+@'
+${auth}
+'@ | Set-Content -Encoding UTF8 (Join-Path $codexDir 'auth.json')
+Write-Host "Codex configuration was written to $codexDir"`
+    }
+  }
+
+  return {
+    path: t('keys.useKeyModal.oneClick.unixPath'),
+    content: `#!/usr/bin/env bash
+set -e
+
+mkdir -p "$HOME/.codex"
+cat > "$HOME/.codex/config.toml" <<'EOF'
+${config}
+EOF
+cat > "$HOME/.codex/auth.json" <<'EOF'
+${auth}
+EOF
+
+echo "Codex configuration was written to $HOME/.codex"`
+  }
+}
+
+function opencodeSetupScript(files: FileConfig[]): FileConfig {
+  const writes = files.map((file, index) => {
+    const suffix = files.length > 1 ? `.${index + 1}` : ''
+    return `cat > "$CONFIG_DIR/opencode${suffix}.json" <<'EOF'
+${file.content}
+EOF`
+  }).join('\n')
+
+  return {
+    path: t('keys.useKeyModal.oneClick.unixPath'),
+    content: `#!/usr/bin/env bash
+set -e
+
+CONFIG_DIR="$HOME/.config/opencode"
+mkdir -p "$CONFIG_DIR"
+${writes}
+
+echo "OpenCode configuration was written to $CONFIG_DIR"`
+  }
+}
+
 // Syntax highlighting helpers
 // Generate file configs based on platform and active tab
 const currentFiles = computed((): FileConfig[] => {
@@ -431,6 +566,37 @@ const currentFiles = computed((): FileConfig[] => {
     default:
       return generateAnthropicFiles(baseUrl, apiKey)
   }
+})
+
+const currentSetupScript = computed((): FileConfig | null => {
+  const baseUrl = props.baseUrl || window.location.origin
+  const apiKey = props.apiKey
+
+  if (!props.platform || !apiKey) return null
+
+  if (activeClientTab.value === 'opencode') {
+    return opencodeSetupScript(currentFiles.value)
+  }
+
+  if (props.platform === 'openai' && activeClientTab.value !== 'claude') {
+    return codexSetupScript(baseUrl, apiKey, activeClientTab.value === 'codex-ws')
+  }
+
+  if (activeClientTab.value === 'gemini' || props.platform === 'gemini') {
+    const geminiBase = props.platform === 'antigravity' ? `${baseUrl}/antigravity` : baseUrl
+    return envSetupScript({
+      GOOGLE_GEMINI_BASE_URL: geminiBase,
+      GEMINI_API_KEY: apiKey,
+      GEMINI_MODEL: 'gemini-2.0-flash'
+    })
+  }
+
+  const anthropicBase = props.platform === 'antigravity' ? `${baseUrl}/antigravity` : baseUrl
+  return envSetupScript({
+    ANTHROPIC_BASE_URL: anthropicBase,
+    ANTHROPIC_AUTH_TOKEN: apiKey,
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1'
+  })
 })
 
 function generateAnthropicFiles(baseUrl: string, apiKey: string): FileConfig[] {
@@ -1041,12 +1207,12 @@ function generateOpenCodeConfig(platform: string, baseUrl: string, apiKey: strin
   }
 }
 
-const copyContent = async (content: string, index: number) => {
+const copyContent = async (content: string, key: string) => {
   const success = await clipboardCopy(content, t('keys.copied'))
   if (success) {
-    copiedIndex.value = index
+    copiedKey.value = key
     setTimeout(() => {
-      copiedIndex.value = null
+      copiedKey.value = null
     }, 2000)
   }
 }

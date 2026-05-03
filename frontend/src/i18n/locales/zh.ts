@@ -676,6 +676,12 @@ export default {
       copy: '复制',
       copied: '已复制',
       note: '这些环境变量将在当前终端会话中生效。如需永久配置，请将其添加到 ~/.bashrc、~/.zshrc 或相应的配置文件中。',
+      oneClick: {
+        description: '一键配置脚本：复制后在本机终端运行，会自动写入当前客户端所需配置。',
+        unixPath: '一键配置脚本 (macOS / Linux)',
+        cmdPath: '一键配置脚本 (Windows CMD)',
+        powerShellPath: '一键配置脚本 (PowerShell)'
+      },
       noGroupTitle: '请先分配分组',
       noGroupDescription:
         '此 API 密钥尚未分配分组，请先在密钥列表中点击分组列进行分配，然后才能查看使用配置。',
