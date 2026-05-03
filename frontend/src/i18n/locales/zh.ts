@@ -677,10 +677,17 @@ export default {
       copied: '已复制',
       note: '这些环境变量将在当前终端会话中生效。如需永久配置，请将其添加到 ~/.bashrc、~/.zshrc 或相应的配置文件中。',
       oneClick: {
-        description: '一键配置脚本：复制后在本机终端运行，会自动写入当前客户端所需配置。',
+        title: '方式一：一键配置脚本',
+        recommended: '推荐',
+        description: '推荐优先使用此方式。复制后在本机终端运行，会自动写入当前客户端所需配置。',
         unixPath: '一键配置脚本 (macOS / Linux)',
         cmdPath: '一键配置脚本 (Windows CMD)',
         powerShellPath: '一键配置脚本 (PowerShell)'
+      },
+      orManual: '或使用手动配置',
+      manual: {
+        title: '方式二：手动配置',
+        description: '如果不方便运行脚本，可以按下面的文件或环境变量内容手动配置。'
       },
       noGroupTitle: '请先分配分组',
       noGroupDescription:

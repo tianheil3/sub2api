@@ -679,10 +679,17 @@ export default {
       copied: 'Copied',
       note: 'These environment variables will be active in the current terminal session. For permanent configuration, add them to ~/.bashrc, ~/.zshrc, or the appropriate configuration file.',
       oneClick: {
-        description: 'One-click setup script: copy and run it in your local terminal to write the selected client configuration.',
+        title: 'Method 1: One-click setup script',
+        recommended: 'Recommended',
+        description: 'Recommended first. Copy and run it in your local terminal to write the selected client configuration.',
         unixPath: 'One-click setup script (macOS / Linux)',
         cmdPath: 'One-click setup script (Windows CMD)',
         powerShellPath: 'One-click setup script (PowerShell)',
+      },
+      orManual: 'or use manual configuration',
+      manual: {
+        title: 'Method 2: Manual configuration',
+        description: 'If you cannot run the script, manually apply the files or environment variables below.',
       },
       noGroupTitle: 'Please assign a group first',
       noGroupDescription: 'This API key has not been assigned to a group. Please click the group column in the key list to assign one before viewing the configuration.',

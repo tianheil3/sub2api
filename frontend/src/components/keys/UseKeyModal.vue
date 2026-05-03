@@ -74,7 +74,15 @@
 
         <!-- One-click setup script -->
         <div v-if="currentSetupScript" class="relative">
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+          <div class="mb-2 flex flex-wrap items-center gap-2">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+              {{ t('keys.useKeyModal.oneClick.title') }}
+            </h3>
+            <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+              {{ t('keys.useKeyModal.oneClick.recommended') }}
+            </span>
+          </div>
+          <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
             {{ t('keys.useKeyModal.oneClick.description') }}
           </p>
           <div class="bg-gray-900 dark:bg-dark-900 rounded-xl overflow-hidden">
@@ -100,8 +108,22 @@
           </div>
         </div>
 
+        <div v-if="currentSetupScript" class="flex items-center gap-3 py-1" aria-hidden="true">
+          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+          <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('keys.useKeyModal.orManual') }}</span>
+          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+        </div>
+
         <!-- Code Blocks (Stacked for multi-file platforms) -->
         <div class="space-y-4">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+              {{ t('keys.useKeyModal.manual.title') }}
+            </h3>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('keys.useKeyModal.manual.description') }}
+            </p>
+          </div>
           <div
             v-for="(file, index) in currentFiles"
             :key="index"
@@ -697,8 +719,8 @@ function generateOpenAIFiles(baseUrl: string, apiKey: string): FileConfig[] {
 
   // config.toml content
   const configContent = `model_provider = "OpenAI"
-model = "gpt-5.4"
-review_model = "gpt-5.4"
+model = "gpt-5.5"
+review_model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 disable_response_storage = true
 network_access = "enabled"
@@ -736,8 +758,8 @@ function generateOpenAIWsFiles(baseUrl: string, apiKey: string): FileConfig[] {
 
   // config.toml content with WebSocket v2
   const configContent = `model_provider = "OpenAI"
-model = "gpt-5.4"
-review_model = "gpt-5.4"
+model = "gpt-5.5"
+review_model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 disable_response_storage = true
 network_access = "enabled"
