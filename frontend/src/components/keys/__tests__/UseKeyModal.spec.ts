@@ -81,6 +81,8 @@ describe('UseKeyModal', () => {
     expect(codeBlock.text()).toContain('mkdir -p "$HOME/.codex"')
     expect(codeBlock.text()).toContain('model = "gpt-5.5"')
     expect(codeBlock.text()).toContain('review_model = "gpt-5.5"')
+    expect(codeBlock.text()).toContain('model_context_window = 400000')
+    expect(codeBlock.text()).toContain('model_auto_compact_token_limit = 360000')
     expect(codeBlock.text()).toContain('"OPENAI_API_KEY": "sk-test"')
   })
 })
