@@ -5348,8 +5348,8 @@ export default {
         fromEmailPlaceholder: "noreply{'@'}example.com",
         fromName: 'From Name',
         fromNamePlaceholder: 'Sub2API',
-        useTls: 'Use TLS',
-        useTlsHint: 'Enable TLS encryption for SMTP connection'
+        useTls: 'Use implicit TLS (SMTPS)',
+        useTlsHint: 'Usually on for port 465. Usually off for port 587, where the server upgrades with STARTTLS.'
       },
       testEmail: {
         title: 'Send Test Email',

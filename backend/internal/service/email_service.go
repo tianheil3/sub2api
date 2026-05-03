@@ -6,7 +6,9 @@ import (
 	"crypto/subtle"
 	"crypto/tls"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/big"
 	"net"
@@ -424,10 +426,12 @@ func (s *EmailService) TestSMTPConnectionWithConfig(config *SMTPConfig) error {
 			// 与发送逻辑一致，显式要求 TLS 1.2+。
 			MinVersion: tls.VersionTLS12,
 		}
-		conn, err := tls.Dial("tcp", addr, tlsConfig)
+		dialer := &net.Dialer{Timeout: smtpDialTimeout}
+		conn, err := tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
 		if err != nil {
-			return fmt.Errorf("tls connection failed: %w", err)
+			return smtpConnectionError("tls connection failed", err)
 		}
+		_ = conn.SetDeadline(time.Now().Add(smtpIOTimeout))
 		defer func() { _ = conn.Close() }()
 
 		client, err := smtp.NewClient(conn, config.Host)
@@ -445,11 +449,25 @@ func (s *EmailService) TestSMTPConnectionWithConfig(config *SMTPConfig) error {
 	}
 
 	// 非TLS连接测试
-	client, err := smtp.Dial(addr)
+	dialer := &net.Dialer{Timeout: smtpDialTimeout}
+	conn, err := dialer.Dial("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("smtp connection failed: %w", err)
+		return smtpConnectionError("smtp connection failed", err)
+	}
+	_ = conn.SetDeadline(time.Now().Add(smtpIOTimeout))
+	defer func() { _ = conn.Close() }()
+
+	client, err := smtp.NewClient(conn, config.Host)
+	if err != nil {
+		return smtpConnectionError("smtp client creation failed", err)
 	}
 	defer func() { _ = client.Close() }()
+
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err = client.StartTLS(&tls.Config{ServerName: config.Host, MinVersion: tls.VersionTLS12}); err != nil {
+			return fmt.Errorf("starttls failed: %w", err)
+		}
+	}
 
 	auth := smtp.PlainAuth("", config.Username, config.Password, config.Host)
 	if err = client.Auth(auth); err != nil {
@@ -457,6 +475,13 @@ func (s *EmailService) TestSMTPConnectionWithConfig(config *SMTPConfig) error {
 	}
 
 	return client.Quit()
+}
+
+func smtpConnectionError(prefix string, err error) error {
+	if errors.Is(err, io.EOF) {
+		return fmt.Errorf("%s: %w (server closed the connection; check SMTP host, port, and TLS mode: port 465 usually requires TLS enabled, while port 587 usually uses STARTTLS with TLS disabled)", prefix, err)
+	}
+	return fmt.Errorf("%s: %w", prefix, err)
 }
 
 // GeneratePasswordResetToken generates a secure 32-byte random token (64 hex characters)

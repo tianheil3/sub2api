@@ -5509,8 +5509,8 @@ export default {
         fromEmailPlaceholder: "noreply{'@'}example.com",
         fromName: '发件人名称',
         fromNamePlaceholder: 'Sub2API',
-        useTls: '使用 TLS',
-        useTlsHint: '为 SMTP 连接启用 TLS 加密'
+        useTls: '使用隐式 TLS (SMTPS)',
+        useTlsHint: '465 端口通常开启；587 端口通常关闭，由服务器 STARTTLS 升级加密'
       },
       testEmail: {
         title: '发送测试邮件',
