@@ -168,6 +168,9 @@ func (f fakeGoogleSubscriptionRepo) ResetDailyUsage(ctx context.Context, id int6
 	}
 	return errors.New("not implemented")
 }
+func (f fakeGoogleSubscriptionRepo) ConsumeOneDayAndResetDailyUsage(ctx context.Context, id int64, start time.Time) error {
+	return f.ResetDailyUsage(ctx, id, start)
+}
 func (f fakeGoogleSubscriptionRepo) ResetWeeklyUsage(ctx context.Context, id int64, start time.Time) error {
 	if f.resetWeekly != nil {
 		return f.resetWeekly(ctx, id, start)

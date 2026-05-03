@@ -21,9 +21,12 @@ type resetQuotaUserSubRepoStub struct {
 	resetDailyCalled   bool
 	resetWeeklyCalled  bool
 	resetMonthlyCalled bool
+	consumeCalled      bool
 	resetDailyErr      error
 	resetWeeklyErr     error
 	resetMonthlyErr    error
+	consumeErr         error
+	consumeWindowStart time.Time
 }
 
 func (r *resetQuotaUserSubRepoStub) GetByID(_ context.Context, id int64) (*UserSubscription, error) {
@@ -41,6 +44,23 @@ func (r *resetQuotaUserSubRepoStub) ResetDailyUsage(_ context.Context, _ int64, 
 		r.sub.DailyWindowStart = &windowStart
 	}
 	return r.resetDailyErr
+}
+
+func (r *resetQuotaUserSubRepoStub) ConsumeOneDayAndResetDailyUsage(_ context.Context, _ int64, windowStart time.Time) error {
+	r.consumeCalled = true
+	r.consumeWindowStart = windowStart
+	if r.consumeErr != nil {
+		return r.consumeErr
+	}
+	if r.sub != nil {
+		if !r.sub.ExpiresAt.AddDate(0, 0, -1).After(time.Now()) {
+			return ErrAdjustWouldExpire
+		}
+		r.sub.DailyUsageUSD = 0
+		r.sub.DailyWindowStart = &windowStart
+		r.sub.ExpiresAt = r.sub.ExpiresAt.AddDate(0, 0, -1)
+	}
+	return r.consumeErr
 }
 
 func (r *resetQuotaUserSubRepoStub) ResetWeeklyUsage(_ context.Context, _ int64, _ time.Time) error {
@@ -204,4 +224,88 @@ func TestAdminResetQuota_ReturnsRefreshedSub(t *testing.T) {
 	// 服务应返回第二次 GetByID 的刷新值而非初始的 99.9
 	require.Equal(t, float64(0), result.DailyUsageUSD, "返回的订阅应反映已归零的用量")
 	require.True(t, stub.resetDailyCalled)
+}
+
+func TestSpendOneDayAndResetDailyQuota(t *testing.T) {
+	dailyLimit := 100.0
+	dailyWindowStart := time.Now().Add(-10 * time.Hour)
+	originalExpiresAt := time.Now().Add(48 * time.Hour)
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:               10,
+			UserID:           20,
+			GroupID:          30,
+			Status:           SubscriptionStatusActive,
+			ExpiresAt:        originalExpiresAt,
+			DailyUsageUSD:    12.34,
+			DailyWindowStart: &dailyWindowStart,
+			Group: &Group{
+				ID:               30,
+				SubscriptionType: SubscriptionTypeSubscription,
+				Status:           StatusActive,
+				DailyLimitUSD:    &dailyLimit,
+			},
+		},
+	}
+
+	svc := newResetQuotaSvc(stub)
+	result, err := svc.SpendOneDayAndResetDailyQuota(context.Background(), 10, 20)
+
+	require.NoError(t, err)
+	require.True(t, stub.consumeCalled)
+	require.NotNil(t, result)
+	require.Equal(t, float64(0), result.DailyUsageUSD)
+	require.NotNil(t, result.DailyWindowStart)
+	require.True(t, result.DailyWindowStart.Hour() == 0)
+	require.True(t, result.ExpiresAt.Equal(originalExpiresAt.AddDate(0, 0, -1)))
+}
+
+func TestSpendOneDayAndResetDailyQuota_OwnerMismatch(t *testing.T) {
+	dailyLimit := 100.0
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:        11,
+			UserID:    20,
+			GroupID:   30,
+			Status:    SubscriptionStatusActive,
+			ExpiresAt: time.Now().Add(48 * time.Hour),
+			Group: &Group{
+				ID:               30,
+				SubscriptionType: SubscriptionTypeSubscription,
+				Status:           StatusActive,
+				DailyLimitUSD:    &dailyLimit,
+			},
+		},
+	}
+
+	svc := newResetQuotaSvc(stub)
+	_, err := svc.SpendOneDayAndResetDailyQuota(context.Background(), 11, 21)
+
+	require.ErrorIs(t, err, ErrSubscriptionNotFound)
+	require.False(t, stub.consumeCalled)
+}
+
+func TestSpendOneDayAndResetDailyQuota_AdjustWouldExpire(t *testing.T) {
+	dailyLimit := 100.0
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:        12,
+			UserID:    20,
+			GroupID:   30,
+			Status:    SubscriptionStatusActive,
+			ExpiresAt: time.Now().Add(12 * time.Hour),
+			Group: &Group{
+				ID:               30,
+				SubscriptionType: SubscriptionTypeSubscription,
+				Status:           StatusActive,
+				DailyLimitUSD:    &dailyLimit,
+			},
+		},
+	}
+
+	svc := newResetQuotaSvc(stub)
+	_, err := svc.SpendOneDayAndResetDailyQuota(context.Background(), 12, 20)
+
+	require.ErrorIs(t, err, ErrAdjustWouldExpire)
+	require.True(t, stub.consumeCalled)
 }

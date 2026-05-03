@@ -64,13 +64,35 @@
               >
                 {{ t(`userSubscriptions.status.${subscription.status}`) }}
               </span>
-              <button
-                v-if="subscription.status === 'active'"
-                :class="['rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors', platformButtonClass(subscription.group?.platform || '')]"
-                @click="router.push({ path: '/purchase', query: { tab: 'subscription', group: String(subscription.group_id) } })"
-              >
-                {{ t('payment.renewNow') }}
-              </button>
+              <div v-if="subscription.status === 'active'" class="flex flex-col items-end gap-1">
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    :class="[
+                      'rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors',
+                      platformButtonClass(subscription.group?.platform || '')
+                    ]"
+                    @click="router.push({ path: '/purchase', query: { tab: 'subscription', group: String(subscription.group_id) } })"
+                  >
+                    {{ t('payment.renewNow') }}
+                  </button>
+                  <button
+                    v-if="subscription.group?.daily_limit_usd"
+                    :disabled="isResetQuotaDisabled(subscription) || resettingQuota"
+                    :title="isResetQuotaDisabled(subscription) ? t('userSubscriptions.resetQuotaDisabled') : ''"
+                    class="inline-flex items-center gap-1 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-700/60 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                    @click="openResetQuotaConfirm(subscription)"
+                  >
+                    <Icon name="refresh" size="sm" />
+                    <span>{{ t('userSubscriptions.resetQuota') }}</span>
+                  </button>
+                </div>
+                <p
+                  v-if="subscription.group?.daily_limit_usd"
+                  class="text-[11px] text-gray-400 dark:text-dark-500"
+                >
+                  {{ t('userSubscriptions.resetQuotaCost') }}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -241,6 +263,16 @@
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        :show="showResetQuotaConfirm"
+        :title="t('userSubscriptions.resetQuotaTitle')"
+        :message="getResetQuotaConfirmMessage(resetQuotaTarget)"
+        :confirm-text="t('userSubscriptions.resetQuota')"
+        :danger="true"
+        @confirm="confirmResetQuota"
+        @cancel="closeResetQuotaConfirm"
+      />
     </div>
   </AppLayout>
 </template>
@@ -254,6 +286,7 @@ import subscriptionsAPI from '@/api/subscriptions'
 import type { UserSubscription } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { formatDateOnly } from '@/utils/format'
 import { platformBorderClass, platformBadgeClass, platformButtonClass, platformLabel } from '@/utils/platformColors'
 
@@ -273,6 +306,9 @@ const appStore = useAppStore()
 
 const subscriptions = ref<UserSubscription[]>([])
 const loading = ref(true)
+const showResetQuotaConfirm = ref(false)
+const resetQuotaTarget = ref<UserSubscription | null>(null)
+const resettingQuota = ref(false)
 
 async function loadSubscriptions() {
   try {
@@ -283,6 +319,64 @@ async function loadSubscriptions() {
     appStore.showError(t('userSubscriptions.failedToLoad'))
   } finally {
     loading.value = false
+  }
+}
+
+function getDaysRemaining(expiresAt: string | null | undefined): number {
+  if (!expiresAt) return 0
+  const now = new Date()
+  const expires = new Date(expiresAt)
+  const diff = expires.getTime() - now.getTime()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+function isResetQuotaDisabled(subscription: UserSubscription): boolean {
+  return getDaysRemaining(subscription.expires_at) <= 1
+}
+
+function openResetQuotaConfirm(subscription: UserSubscription) {
+  if (isResetQuotaDisabled(subscription)) return
+  resetQuotaTarget.value = subscription
+  showResetQuotaConfirm.value = true
+}
+
+function closeResetQuotaConfirm() {
+  showResetQuotaConfirm.value = false
+  resetQuotaTarget.value = null
+}
+
+function getResetQuotaConfirmMessage(subscription: UserSubscription | null): string {
+  if (!subscription) {
+    return t('userSubscriptions.resetQuotaConfirm', {
+      group: '',
+      current: 0,
+      remaining: 0
+    })
+  }
+
+  const current = Math.max(getDaysRemaining(subscription.expires_at), 1)
+  const remaining = Math.max(current - 1, 0)
+  return t('userSubscriptions.resetQuotaConfirm', {
+    group: subscription.group?.name || `Group #${subscription.group_id}`,
+    current,
+    remaining
+  })
+}
+
+async function confirmResetQuota() {
+  if (!resetQuotaTarget.value || resettingQuota.value) return
+
+  resettingQuota.value = true
+  try {
+    await subscriptionsAPI.resetQuota(resetQuotaTarget.value.id)
+    appStore.showSuccess(t('userSubscriptions.resetQuotaSuccess'))
+    closeResetQuotaConfirm()
+    await loadSubscriptions()
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('userSubscriptions.failedToResetQuota'))
+    console.error('Failed to reset quota:', error)
+  } finally {
+    resettingQuota.value = false
   }
 }
 

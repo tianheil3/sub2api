@@ -37,6 +37,7 @@ var (
 	ErrMonthlyLimitExceeded       = infraerrors.TooManyRequests("MONTHLY_LIMIT_EXCEEDED", "monthly usage limit exceeded")
 	ErrSubscriptionNilInput       = infraerrors.BadRequest("SUBSCRIPTION_NIL_INPUT", "subscription input cannot be nil")
 	ErrAdjustWouldExpire          = infraerrors.BadRequest("ADJUST_WOULD_EXPIRE", "adjustment would result in expired subscription (remaining days must be > 0)")
+	ErrDailyResetUnsupported      = infraerrors.BadRequest("DAILY_RESET_UNSUPPORTED", "daily quota reset is not available for this subscription")
 )
 
 // SubscriptionService 订阅服务
@@ -733,6 +734,52 @@ func (s *SubscriptionService) AdminResetQuota(ctx context.Context, subscriptionI
 		_ = s.billingCacheService.InvalidateSubscription(ctx, sub.UserID, sub.GroupID)
 	}
 	// Return the refreshed subscription from DB
+	return s.userSubRepo.GetByID(ctx, subscriptionID)
+}
+
+// SpendOneDayAndResetDailyQuota lets a user self-service reset today's daily quota
+// by consuming one day of remaining subscription validity.
+func (s *SubscriptionService) SpendOneDayAndResetDailyQuota(ctx context.Context, subscriptionID, userID int64) (*UserSubscription, error) {
+	sub, err := s.userSubRepo.GetByID(ctx, subscriptionID)
+	if err != nil {
+		return nil, ErrSubscriptionNotFound
+	}
+	if sub.UserID != userID {
+		return nil, ErrSubscriptionNotFound
+	}
+	if sub.Status == SubscriptionStatusExpired || sub.IsExpired() {
+		return nil, ErrSubscriptionExpired
+	}
+	if sub.Status == SubscriptionStatusSuspended {
+		return nil, ErrSubscriptionSuspended
+	}
+
+	group := sub.Group
+	if group == nil && s.groupRepo != nil {
+		group, err = s.groupRepo.GetByID(ctx, sub.GroupID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if group == nil || !group.HasDailyLimit() {
+		return nil, ErrDailyResetUnsupported
+	}
+
+	windowStart := startOfDay(time.Now())
+	if err := s.userSubRepo.ConsumeOneDayAndResetDailyUsage(ctx, sub.ID, windowStart); err != nil {
+		return nil, err
+	}
+
+	s.InvalidateSubCache(sub.UserID, sub.GroupID)
+	if s.billingCacheService != nil {
+		userID, groupID := sub.UserID, sub.GroupID
+		go func() {
+			cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = s.billingCacheService.InvalidateSubscription(cacheCtx, userID, groupID)
+		}()
+	}
+
 	return s.userSubRepo.GetByID(ctx, subscriptionID)
 }
 

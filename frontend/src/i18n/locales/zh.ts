@@ -6091,6 +6091,13 @@ export default {
     daysRemaining: '剩余 {days} 天',
     expiresOn: '{date} 到期',
     resetIn: '{time} 后重置',
+    resetQuota: '重置今日额度',
+    resetQuotaCost: '消耗 1 天剩余时长',
+    resetQuotaTitle: '重置今日额度',
+    resetQuotaConfirm: '确认后将消耗 1 天剩余时长，把 "{group}" 的今日已用额度清零。剩余时长会从 {current} 天变为 {remaining} 天。',
+    resetQuotaSuccess: '今日额度已重置',
+    failedToResetQuota: '重置今日额度失败',
+    resetQuotaDisabled: '剩余天数不足，无法重置',
     windowNotActive: '等待首次使用',
     usageOf: '已用 {used} / {limit}'
   },

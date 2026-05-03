@@ -110,6 +110,7 @@ func RegisterUserRoutes(
 			subscriptions.GET("/active", h.Subscription.GetActive)
 			subscriptions.GET("/progress", h.Subscription.GetProgress)
 			subscriptions.GET("/summary", h.Subscription.GetSummary)
+			subscriptions.POST("/:id/reset-quota", h.Subscription.ResetQuota)
 		}
 
 		// 渠道监控（用户只读）

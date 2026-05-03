@@ -5933,6 +5933,14 @@ export default {
     daysRemaining: '{days} days remaining',
     expiresOn: 'Expires on {date}',
     resetIn: 'Resets in {time}',
+    resetQuota: 'Reset Today',
+    resetQuotaCost: 'Consumes 1 day of remaining time',
+    resetQuotaTitle: "Reset Today's Usage",
+    resetQuotaConfirm:
+      'Spend 1 day of remaining time to reset today\'s usage for "{group}"? Remaining time will drop from {current} to {remaining} days.',
+    resetQuotaSuccess: "Today's usage has been reset",
+    failedToResetQuota: "Failed to reset today's usage",
+    resetQuotaDisabled: 'Not enough remaining days to reset',
     windowNotActive: 'Awaiting first use',
     usageOf: '{used} of {limit}'
   },

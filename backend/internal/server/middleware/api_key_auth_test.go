@@ -687,6 +687,10 @@ func (r *stubUserSubscriptionRepo) ResetDailyUsage(ctx context.Context, id int64
 	return errors.New("not implemented")
 }
 
+func (r *stubUserSubscriptionRepo) ConsumeOneDayAndResetDailyUsage(ctx context.Context, id int64, newWindowStart time.Time) error {
+	return r.ResetDailyUsage(ctx, id, newWindowStart)
+}
+
 func (r *stubUserSubscriptionRepo) ResetWeeklyUsage(ctx context.Context, id int64, newWindowStart time.Time) error {
 	if r.resetWeekly != nil {
 		return r.resetWeekly(ctx, id, newWindowStart)

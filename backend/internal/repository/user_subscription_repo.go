@@ -318,6 +318,40 @@ func (r *userSubscriptionRepository) ResetDailyUsage(ctx context.Context, id int
 	return translatePersistenceError(err, service.ErrSubscriptionNotFound, nil)
 }
 
+func (r *userSubscriptionRepository) ConsumeOneDayAndResetDailyUsage(ctx context.Context, id int64, newWindowStart time.Time) error {
+	client := clientFromContext(ctx, r.client)
+	const updateSQL = `
+		UPDATE user_subscriptions us
+		SET
+			daily_usage_usd = 0,
+			daily_window_start = $1,
+			expires_at = us.expires_at - INTERVAL '1 day',
+			updated_at = NOW()
+		FROM groups g
+		WHERE us.id = $2
+			AND us.deleted_at IS NULL
+			AND us.group_id = g.id
+			AND g.deleted_at IS NULL
+			AND us.status = $3
+			AND us.expires_at > NOW() + INTERVAL '1 day'
+	`
+
+	result, err := client.ExecContext(ctx, updateSQL, newWindowStart, id, service.SubscriptionStatusActive)
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected > 0 {
+		return nil
+	}
+
+	return service.ErrAdjustWouldExpire
+}
+
 func (r *userSubscriptionRepository) ResetWeeklyUsage(ctx context.Context, id int64, newWindowStart time.Time) error {
 	client := clientFromContext(ctx, r.client)
 	_, err := client.UserSubscription.UpdateOneID(id).

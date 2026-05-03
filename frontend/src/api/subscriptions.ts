@@ -67,10 +67,23 @@ export async function getSubscriptionProgress(
   return response.data
 }
 
+/**
+ * Reset today's usage quota for a subscription by consuming one remaining day.
+ * @param subscriptionId - Subscription ID
+ * @returns Updated subscription
+ */
+export async function resetQuota(subscriptionId: number): Promise<UserSubscription> {
+  const response = await apiClient.post<UserSubscription>(
+    `/subscriptions/${subscriptionId}/reset-quota`
+  )
+  return response.data
+}
+
 export default {
   getMySubscriptions,
   getActiveSubscriptions,
   getSubscriptionsProgress,
   getSubscriptionSummary,
-  getSubscriptionProgress
+  getSubscriptionProgress,
+  resetQuota
 }
