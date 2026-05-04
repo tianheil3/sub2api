@@ -85,4 +85,39 @@ describe('UseKeyModal', () => {
     expect(codeBlock.text()).toContain('model_auto_compact_token_limit = 360000')
     expect(codeBlock.text()).toContain('"OPENAI_API_KEY": "sk-test"')
   })
+
+  it('renders the Windows Codex setup script without inline here-string terminators', async () => {
+    const wrapper = mount(UseKeyModal, {
+      props: {
+        show: true,
+        apiKey: 'sk-test',
+        baseUrl: 'https://example.com/v1',
+        platform: 'openai'
+      },
+      global: {
+        stubs: {
+          BaseDialog: {
+            template: '<div><slot /><slot name="footer" /></div>'
+          },
+          Icon: {
+            template: '<span />'
+          }
+        }
+      }
+    })
+
+    const windowsTab = wrapper.findAll('button').find((button) => button.text().includes('Windows'))
+    expect(windowsTab).toBeDefined()
+
+    await windowsTab!.trigger('click')
+    await nextTick()
+
+    const codeBlock = wrapper.find('pre code')
+    expect(codeBlock.exists()).toBe(true)
+    expect(codeBlock.text()).toContain("$configToml = @'")
+    expect(codeBlock.text()).toContain("$authJson = @'")
+    expect(codeBlock.text()).toContain("'@\nSet-Content -Encoding UTF8 -Path (Join-Path $codexDir 'config.toml') -Value $configToml")
+    expect(codeBlock.text()).toContain("'@\nSet-Content -Encoding UTF8 -Path (Join-Path $codexDir 'auth.json') -Value $authJson")
+    expect(codeBlock.text()).not.toContain("'@ | Set-Content")
+  })
 })
