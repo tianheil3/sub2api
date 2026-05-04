@@ -426,7 +426,7 @@ const comment = (value: string) => wrapToken('text-slate-500', value)
 const doubleQuoteShell = (value: string) => value.replace(/["\\$`]/g, '\\$&')
 const singleQuotePowerShell = (value: string) => value.replace(/'/g, "''")
 const cmdValue = (value: string) => value.replace(/"/g, '""')
-const powershellHereString = (value: string) => `@'\n${value}\n'@`
+const powerShellDoubleQuoted = (value: string) => `"${value.replace(/[`"$]/g, '`$&').replace(/\n/g, '`n')}"`
 
 function unixProfileScript(exports: Record<string, string>): string {
   const lines = Object.entries(exports).map(([key, value]) => `export ${key}="${doubleQuoteShell(value)}"`)
@@ -483,10 +483,10 @@ function codexSetupScript(baseUrl: string, apiKey: string, websocket: boolean): 
       path: t('keys.useKeyModal.oneClick.powerShellPath'),
       content: `$codexDir = Join-Path $env:USERPROFILE '.codex'
 New-Item -ItemType Directory -Force -Path $codexDir | Out-Null
-$configToml = ${powershellHereString(config)}
-Set-Content -Encoding UTF8 -Path (Join-Path $codexDir 'config.toml') -Value $configToml
-$authJson = ${powershellHereString(auth)}
-Set-Content -Encoding UTF8 -Path (Join-Path $codexDir 'auth.json') -Value $authJson
+$configToml = ${powerShellDoubleQuoted(config)}
+[System.IO.File]::WriteAllText((Join-Path $codexDir 'config.toml'), $configToml, [System.Text.UTF8Encoding]::new($false))
+$authJson = ${powerShellDoubleQuoted(auth)}
+[System.IO.File]::WriteAllText((Join-Path $codexDir 'auth.json'), $authJson, [System.Text.UTF8Encoding]::new($false))
 Write-Host "Codex configuration was written to $codexDir"`
     }
   }
