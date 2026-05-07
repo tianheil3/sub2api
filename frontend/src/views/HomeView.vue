@@ -13,414 +13,246 @@
   </div>
 
   <!-- Default Home Page -->
-  <div
-    v-else
-    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
-  >
-    <!-- Background Decorations -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div
-        class="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-primary-400/20 blur-3xl"
-      ></div>
-      <div
-        class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="absolute left-1/3 top-1/4 h-72 w-72 rounded-full bg-primary-300/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-primary-400/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
-      ></div>
-    </div>
-
-    <!-- Header -->
-    <header class="relative z-20 px-6 py-4">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between">
-        <!-- Logo -->
-        <div class="flex items-center">
-          <div class="h-10 w-10 overflow-hidden rounded-xl shadow-md">
-            <img :src="siteLogo || '/logo.png'" alt="Logo" class="h-full w-full object-contain" />
-          </div>
-        </div>
-
-        <!-- Nav Actions -->
-        <div class="flex items-center gap-3">
-          <!-- Language Switcher -->
-          <LocaleSwitcher />
-
-          <!-- Doc Link -->
-          <a
-            v-if="docUrl"
-            :href="docUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="t('home.viewDocs')"
-          >
-            <Icon name="book" size="md" />
-          </a>
-
-          <!-- Theme Toggle -->
-          <button
-            @click="toggleTheme"
-            class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
-
-          <!-- Login / Dashboard Button -->
-          <router-link
-            v-if="isAuthenticated"
-            :to="dashboardPath"
-            class="inline-flex items-center gap-1.5 rounded-full bg-gray-900 py-1 pl-1 pr-2.5 transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-[10px] font-semibold text-white"
-            >
-              {{ userInitial }}
-            </span>
-            <span class="text-xs font-medium text-white">{{ t('home.dashboard') }}</span>
-            <svg
-              class="h-3 w-3 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"
-              />
-            </svg>
-          </router-link>
-          <router-link
-            v-else
-            to="/login"
-            class="inline-flex items-center rounded-full bg-gray-900 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            {{ t('home.login') }}
-          </router-link>
-        </div>
-      </nav>
-    </header>
-
-    <!-- Main Content -->
-    <main class="relative z-10 flex-1 px-6 py-16">
-      <div class="mx-auto max-w-6xl">
-        <!-- Hero Section - Left/Right Layout -->
-        <div class="mb-12 flex flex-col items-center justify-between gap-12 lg:flex-row lg:gap-16">
-          <!-- Left: Text Content -->
-          <div class="flex-1 text-center lg:text-left">
-            <h1
-              class="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
-            >
-              {{ siteName }}
-            </h1>
-            <p class="mb-8 text-lg text-gray-600 dark:text-dark-300 md:text-xl">
-              {{ siteSubtitle }}
-            </p>
-
-            <!-- CTA Button -->
-            <div>
-              <router-link
-                :to="isAuthenticated ? dashboardPath : '/login'"
-                class="btn btn-primary px-8 py-3 text-base shadow-lg shadow-primary-500/30"
-              >
-                {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
-                <Icon name="arrowRight" size="md" class="ml-2" :stroke-width="2" />
-              </router-link>
-            </div>
-          </div>
-
-          <!-- Right: Terminal Animation -->
-          <div class="flex flex-1 justify-center lg:justify-end">
-            <div class="terminal-container">
-              <div class="terminal-window">
-                <!-- Window header -->
-                <div class="terminal-header">
-                  <div class="terminal-buttons">
-                    <span class="btn-close"></span>
-                    <span class="btn-minimize"></span>
-                    <span class="btn-maximize"></span>
+  <div v-else class="cyber-home">
+    <div class="cyber-page">
+          <header class="nav">
+            <a class="brand" href="/home" aria-label="CyberRelay AI">
+              <div class="mark" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="brand-copy">
+                <strong>CyberRelay AI</strong>
+                <small>OpenAI-compatible relay</small>
+              </div>
+            </a>
+            <nav class="nav-links" aria-label="主导航">
+              <a href="#models">Models</a>
+              <a href="#flow">Setup</a>
+              <a href="#notes">Notes</a>
+              <a class="home-button" href="/dashboard">进入中转站 ↘</a>
+            </nav>
+          </header>
+    
+          <main>
+            <section class="hero" aria-label="首页首屏">
+              <div class="hero-grid">
+                <div>
+                  <p class="eyebrow">AI API relay for teams and builders</p>
+                  <h1>
+                    <span>统一接入</span>
+                    <span>GPT-5.5</span>
+                    <span>GPT Image 2</span>
+                  </h1>
+                  <p class="lead">
+                    <span class="lead-main">注册、兑换、创建秘钥，即可开始调用。</span>
+                    <span class="lead-mobile">注册、兑换、创建秘钥。</span>
+                  </p>
+                  <ul class="lead-list">
+                    <li>官方直转满血 GPT-5.5，支持 GPT Image 2 生图能力。</li>
+                    <li>OpenAI 兼容 API，可接入 Codex、Claude Code、opencode、Droid、Zed、龙虾 OpenClaw 等开发工具。</li>
+                  </ul>
+                  <div class="hero-actions">
+                    <a class="home-button" href="/register">邮箱注册</a>
+                    <a class="home-button secondary" href="https://pay.ldxp.cn/shop/WNAXV9CI">购买卡密</a>
+                    <a class="home-button secondary" href="#flow">查看购买使用流程</a>
                   </div>
-                  <span class="terminal-title">terminal</span>
+                  <div class="model-strip" aria-label="模型能力">
+                    <span class="pill">GPT-5.5 full</span>
+                    <span class="pill">GPT Image 2</span>
+                    <span class="pill">Official relay</span>
+                    <span class="pill">OpenAI-compatible API</span>
+                    <span class="pill">Codex / Claude Code / OpenClaw</span>
+                  </div>
                 </div>
-                <!-- Terminal content -->
-                <div class="terminal-body">
-                  <div class="code-line line-1">
-                    <span class="code-prompt">$</span>
-                    <span class="code-cmd">curl</span>
-                    <span class="code-flag">-X POST</span>
-                    <span class="code-url">/v1/messages</span>
+    
+                <div class="product" aria-label="产品界面预览">
+                  <div class="product-top">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span>cyberrelay / api-keys / gpt-5.5</span>
                   </div>
-                  <div class="code-line line-2">
-                    <span class="code-comment"># Routing to upstream...</span>
-                  </div>
-                  <div class="code-line line-3">
-                    <span class="code-success">200 OK</span>
-                    <span class="code-response">{ "content": "Hello!" }</span>
-                  </div>
-                  <div class="code-line line-4">
-                    <span class="code-prompt">$</span>
-                    <span class="cursor"></span>
+                  <div class="product-body">
+                    <aside class="gateway-sidebar">
+                      <p class="panel-title">Gateway</p>
+                      <a class="menu-item active" href="/keys">API 秘钥 ↗</a>
+                      <a class="menu-item" href="/redeem">卡密兑换 ↗</a>
+                      <a class="menu-item" href="/available-channels">模型列表 ↗</a>
+                      <a class="menu-item" href="/usage">用量明细 ↗</a>
+                    </aside>
+                    <div class="workspace">
+                      <div class="command">
+                        <span class="accent">curl</span> https://ai.cyberrelay.net/v1/chat/completions \<br />
+                        &nbsp;&nbsp;-H "Authorization: Bearer sk-..." \<br />
+                        &nbsp;&nbsp;-d '{ "model": "gpt-5.5", "messages": [...] }'
+                      </div>
+                      <div class="log-list">
+                        <div class="log-row"><span class="ok">200</span><span>gpt-5.5 · chat completion</span><span>1.28s</span></div>
+                        <div class="log-row"><span class="ok">200</span><span>gpt-image-2 · image generation</span><span>4.72s</span></div>
+                        <div class="log-row"><span class="ok">200</span><span>sticky session · selected group</span><span>0.86s</span></div>
+                        <div class="log-row"><span class="ok">200</span><span>quota check · 100刀 / 7天</span><span>0.19s</span></div>
+                      </div>
+                    </div>
+                    <aside class="inspector">
+                      <p class="panel-title">Status</p>
+                      <div class="metric"><strong>100刀</strong><span>建议创建额度</span></div>
+                      <div class="metric"><strong>7天</strong><span>秘钥有效期</span></div>
+                      <div class="metric"><strong>分组</strong><span>创建秘钥时选择</span></div>
+                    </aside>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </section>
+    
+            <section id="models">
+              <div class="section-head">
+                <h2>模型与接口能力</h2>
+                <p class="section-copy">
+                  面向开发者和团队的 OpenAI 兼容中转能力，重点覆盖文本、推理、图像生成和企业级用量场景。
+                </p>
+              </div>
+              <div class="cards">
+                <article class="card">
+                  <span class="num">01 / model</span>
+                  <h3>GPT-5.5 满血模型</h3>
+                  <p>支持最新 GPT-5.5 满血模型，官方直转，适合高质量推理、编码、内容生成和复杂任务。</p>
+                </article>
+                <article class="card">
+                  <span class="num">02 / image</span>
+                  <h3>GPT Image 2 生图</h3>
+                  <p>支持 GPT Image 2 图像生成能力，可通过 API 对接到自己的产品、工作流或自动化系统。</p>
+                </article>
+                <article class="card">
+                  <span class="num">03 / api</span>
+                  <h3>OpenAI 兼容 API</h3>
+                  <p>使用熟悉的 OpenAI API 调用方式接入，降低迁移成本，适合已有应用和开发工具快速切换配置。</p>
+                </article>
+                <article class="card">
+                  <span class="num">04 / tools</span>
+                  <h3>开发工具接入</h3>
+                  <p>API 可接入 Codex、Claude Code、opencode、Droid、Zed、龙虾 OpenClaw 等工具，适合编码、代理任务和自动化工作流。</p>
+                </article>
+              </div>
+            </section>
+    
+            <section id="flow">
+              <div class="section-head">
+                <h2>购买使用流程</h2>
+                <p class="section-copy">按顺序完成注册、兑换、创建秘钥和配置，即可开始调用接口。</p>
+              </div>
+              <div class="steps">
+                <article class="step">
+                  <span class="index">01</span>
+                  <h3>邮箱注册</h3>
+                  <p>点击邮箱注册，完成邮箱注册。</p>
+                </article>
+                <article class="step">
+                  <span class="index">02</span>
+                  <h3>卡密兑换</h3>
+                  <p>购买卡密后，在中转站内进入兑换入口完成兑换。</p>
+                </article>
+                <article class="step">
+                  <span class="index">03</span>
+                  <h3>创建秘钥</h3>
+                  <p>点击 API秘钥，创建秘钥，选择 100刀 7天有效期，并选择对应分组。</p>
+                </article>
+                <article class="step">
+                  <span class="index">04</span>
+                  <h3>配置使用</h3>
+                  <p>点击使用秘钥。优先使用方式一一键配置；如遇异常，再使用方式二手动配置。</p>
+                </article>
+              </div>
+            </section>
+    
+            <section id="purchase">
+              <div class="section-head">
+                <h2>购买与咨询</h2>
+                <p class="section-copy">
+                  扫码购买卡密或添加微信咨询。企业对接、大用量报价和稳定性需求建议先微信沟通。
+                </p>
+              </div>
+              <div class="purchase-grid">
+                <article class="qr-card">
+                  <div class="qr-frame">
+                    <img src="/店铺二维码.png" alt="店铺购买二维码" />
+                  </div>
+                  <div>
+                    <h3>购买卡密</h3>
+                    <p>扫码进入店铺购买卡密，购买后回到中转站内完成兑换。</p>
+                    <a class="home-button" href="https://pay.ldxp.cn/shop/WNAXV9CI">打开购买地址</a>
+                    <div class="mini">https://pay.ldxp.cn/shop/WNAXV9CI</div>
+                  </div>
+                </article>
+                <article class="qr-card">
+                  <div class="qr-frame">
+                    <img src="/微信扫一扫.jpg" alt="微信咨询二维码" />
+                  </div>
+                  <div>
+                    <h3>微信咨询</h3>
+                    <p>企业对接、量大优惠、报价和模型调用问题，可添加微信沟通。</p>
+                    <div class="home-button secondary">微信：tianheilezz</div>
+                  </div>
+                </article>
+              </div>
+            </section>
+    
+            <section id="notes">
+              <div class="section-head">
+                <h2>注意事项</h2>
+                <p class="section-copy">这些细节会影响注册、兑换和调用体验，建议首次使用前先确认。</p>
+              </div>
+              <div class="notice">
+                <div class="notice-item">
+                  <strong>邮箱注册</strong>
+                  <p>请使用邮箱注册。若注册邮件未收到，请检查垃圾箱或邮件拦截设置。</p>
+                </div>
+                <div class="notice-item">
+                  <strong>秘钥分组</strong>
+                  <p>创建秘钥时需要选择对应分组，避免额度、模型或路由策略不符合预期。</p>
+                </div>
+                <div class="notice-item">
+                  <strong>模型调用</strong>
+                  <p>GPT-5.5、GPT Image 2 等模型通过 OpenAI 兼容 API 对接，使用前请确认模型名和调用方式。</p>
+                </div>
+                <div class="notice-item">
+                  <strong>配置优先级</strong>
+                  <p>点击使用秘钥后，优先选择方式一一键配置；若客户端异常，再改用方式二。</p>
+                </div>
+              </div>
+            </section>
+    
+            <section>
+              <div class="enterprise">
+                <div>
+                  <h2>企业对接与大用量报价</h2>
+                  <p>
+                    欢迎企业、团队和高频 API 使用场景对接。量大可优惠，具体报价、并发、额度和稳定性需求可咨询微信：
+                    <strong>tianheilezz</strong>。
+                  </p>
+                </div>
+                <div class="hero-actions">
+                  <a class="home-button" href="https://pay.ldxp.cn/shop/WNAXV9CI">购买卡密</a>
+                  <a class="home-button secondary" href="/dashboard">进入中转站</a>
+                </div>
+              </div>
+            </section>
+          </main>
+    
+          <footer>
+            <span>CyberRelay AI · OpenAI-compatible relay</span>
+            <span>Register with email · Redeem code · Create API key · Configure</span>
+          </footer>
         </div>
-
-        <!-- Feature Tags - Centered -->
-        <div class="mb-12 flex flex-wrap items-center justify-center gap-4 md:gap-6">
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="swap" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.subscriptionToApi')
-            }}</span>
-          </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="shield" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.stickySession')
-            }}</span>
-          </div>
-          <div
-            class="inline-flex items-center gap-2.5 rounded-full border border-gray-200/50 bg-white/80 px-5 py-2.5 shadow-sm backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/80"
-          >
-            <Icon name="chart" size="sm" class="text-primary-500" />
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{
-              t('home.tags.realtimeBilling')
-            }}</span>
-          </div>
-        </div>
-
-        <!-- Features Grid -->
-        <div class="mb-12 grid gap-6 md:grid-cols-3">
-          <!-- Feature 1: Unified Gateway -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110"
-            >
-              <Icon name="server" size="lg" class="text-white" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.unifiedGateway') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.unifiedGatewayDesc') }}
-            </p>
-          </div>
-
-          <!-- Feature 2: Account Pool -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.multiAccount') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.multiAccountDesc') }}
-            </p>
-          </div>
-
-          <!-- Feature 3: Billing & Quota -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
-            <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110"
-            >
-              <svg
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
-                />
-              </svg>
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('home.features.balanceQuota') }}
-            </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
-              {{ t('home.features.balanceQuotaDesc') }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Supported Providers -->
-        <div class="mb-8 text-center">
-          <h2 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
-            {{ t('home.providers.title') }}
-          </h2>
-          <p class="text-sm text-gray-600 dark:text-dark-400">
-            {{ t('home.providers.description') }}
-          </p>
-        </div>
-
-        <div class="mb-16 flex flex-wrap items-center justify-center gap-4">
-          <!-- Claude - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-orange-500"
-            >
-              <span class="text-xs font-bold text-white">C</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.claude') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- GPT - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">GPT</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- Gemini - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600"
-            >
-              <span class="text-xs font-bold text-white">G</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.gemini') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- Antigravity - Supported -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-primary-200 bg-white/60 px-5 py-3 ring-1 ring-primary-500/20 backdrop-blur-sm dark:border-primary-800 dark:bg-dark-800/60"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-pink-600"
-            >
-              <span class="text-xs font-bold text-white">A</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.antigravity') }}</span>
-            <span
-              class="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-              >{{ t('home.providers.supported') }}</span
-            >
-          </div>
-          <!-- More - Coming Soon -->
-          <div
-            class="flex items-center gap-2 rounded-xl border border-gray-200/50 bg-white/40 px-5 py-3 opacity-60 backdrop-blur-sm dark:border-dark-700/50 dark:bg-dark-800/40"
-          >
-            <div
-              class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gray-500 to-gray-600"
-            >
-              <span class="text-xs font-bold text-white">+</span>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-dark-200">{{ t('home.providers.more') }}</span>
-            <span
-              class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-dark-700 dark:text-dark-400"
-              >{{ t('home.providers.soon') }}</span
-            >
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="relative z-10 border-t border-gray-200/50 px-6 py-8 dark:border-dark-800/50">
-      <div
-        class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 text-center sm:flex-row sm:text-left"
-      >
-        <p class="text-sm text-gray-500 dark:text-dark-400">
-          &copy; {{ currentYear }} {{ siteName }}. {{ t('home.footer.allRightsReserved') }}
-        </p>
-        <div class="flex items-center gap-4">
-          <a
-            v-if="docUrl"
-            :href="docUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
-          >
-            {{ t('home.docs') }}
-          </a>
-          <a
-            :href="githubUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
-          >
-            GitHub
-          </a>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { computed, onMounted } from 'vue'
 import { useAuthStore, useAppStore } from '@/stores'
-import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
-import Icon from '@/components/icons/Icon.vue'
-
-const { t } = useI18n()
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
 
-// Site settings - directly from appStore (already initialized from injected config)
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
-const siteLogo = computed(() => appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '')
-const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
-const docUrl = computed(() => appStore.cachedPublicSettings?.doc_url || appStore.docUrl || '')
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
 
 // Check if homeContent is a URL (for iframe display)
@@ -429,48 +261,7 @@ const isHomeContentUrl = computed(() => {
   return content.startsWith('http://') || content.startsWith('https://')
 })
 
-// Theme
-const isDark = ref(document.documentElement.classList.contains('dark'))
-
-// GitHub URL
-const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
-
-// Auth state
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-const isAdmin = computed(() => authStore.isAdmin)
-const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
-const userInitial = computed(() => {
-  const user = authStore.user
-  if (!user || !user.email) return ''
-  return user.email.charAt(0).toUpperCase()
-})
-
-// Current year for footer
-const currentYear = computed(() => new Date().getFullYear())
-
-// Toggle theme
-function toggleTheme() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-// Initialize theme
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme')
-  if (
-    savedTheme === 'dark' ||
-    (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
-}
-
 onMounted(() => {
-  initTheme()
-
-  // Check auth state
   authStore.checkAuth()
 
   // Ensure public settings are loaded (will use cache if already loaded from injected config)
@@ -481,164 +272,660 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Terminal Container */
-.terminal-container {
-  position: relative;
-  display: inline-block;
-}
+.cyber-home {
+        color-scheme: dark;
+        --bg: #0d0f10;
+        --bg-top: #113a38;
+        --panel: #141719;
+        --panel-soft: #191d20;
+        --panel-deep: #090a0b;
+        --line: rgba(255, 255, 255, 0.08);
+        --line-strong: rgba(255, 255, 255, 0.16);
+        --text: #f1f0e8;
+        --muted: #c0c2bc;
+        --dim: #8d928d;
+        --accent: #14b8a6;
+        --accent-soft: rgba(20, 184, 166, 0.16);
+        --button: #eeeee5;
+        --button-text: #111315;
+        --warn: #e5d06d;
+      }
+      .cyber-home {
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(17, 58, 56, 0.92) 0, rgba(13, 15, 16, 0.98) 128px),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+.cyber-home a {
+        color: inherit;
+        text-decoration: none;
+      }
 
-/* Terminal Window */
-.terminal-window {
-  width: 420px;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-  border-radius: 14px;
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
-  transition: transform 0.3s ease;
-}
+      .cyber-page {
+        width: min(1220px, calc(100% - 40px));
+        margin: 0 auto;
+      }
 
-.terminal-window:hover {
-  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(-4px);
-}
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 82px;
+      }
 
-/* Terminal Header */
-.terminal-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(30, 41, 59, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
 
-.terminal-buttons {
-  display: flex;
-  gap: 8px;
-}
+      .mark {
+        display: grid;
+        grid-template-columns: repeat(5, 6px);
+        gap: 4px;
+        opacity: 0.82;
+      }
 
-.terminal-buttons span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
+      .mark span {
+        width: 6px;
+        height: 6px;
+        border-radius: 99px;
+        background: var(--muted);
+      }
 
-.btn-close {
-  background: #ef4444;
-}
-.btn-minimize {
-  background: #eab308;
-}
-.btn-maximize {
-  background: #22c55e;
-}
+      .brand-copy strong {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
 
-.terminal-title {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-  margin-right: 52px;
-}
+      .brand-copy small {
+        display: block;
+        margin-top: 2px;
+        color: var(--dim);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
 
-/* Terminal Body */
-.terminal-body {
-  padding: 20px 24px;
-  font-family: ui-monospace, 'Fira Code', monospace;
-  font-size: 14px;
-  line-height: 2;
-}
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 14px;
+      }
 
-.code-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: line-appear 0.5s ease forwards;
-}
+      .home-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 0 18px;
+        background: var(--button);
+        color: var(--button-text) !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
 
-.line-1 {
-  animation-delay: 0.3s;
-}
-.line-2 {
-  animation-delay: 1s;
-}
-.line-3 {
-  animation-delay: 1.8s;
-}
-.line-4 {
-  animation-delay: 2.5s;
-}
+      .home-button.secondary {
+        background: transparent;
+        color: var(--text) !important;
+        border-color: var(--line-strong);
+      }
 
-@keyframes line-appear {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+      .hero {
+        padding: 128px 0 72px;
+      }
 
-.code-prompt {
-  color: #22c55e;
-  font-weight: bold;
-}
-.code-cmd {
-  color: #38bdf8;
-}
-.code-flag {
-  color: #a78bfa;
-}
-.code-url {
-  color: #14b8a6;
-}
-.code-comment {
-  color: #64748b;
-  font-style: italic;
-}
-.code-success {
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.15);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.code-response {
-  color: #fbbf24;
-}
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.82fr) minmax(520px, 1.18fr);
+        gap: 56px;
+        align-items: end;
+      }
 
-/* Blinking Cursor */
-.cursor {
-  display: inline-block;
-  width: 8px;
-  height: 16px;
-  background: #22c55e;
-  animation: blink 1s step-end infinite;
-}
+      .eyebrow {
+        margin: 0 0 18px;
+        color: var(--dim);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+.cyber-home h1 {
+        max-width: 620px;
+        margin: 0;
+        color: #f2f1e9;
+        font-size: clamp(34px, 3.6vw, 52px);
+        font-weight: 750;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+.cyber-home h1 span {
+        display: block;
+        white-space: nowrap;
+      }
 
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
+      .lead {
+        max-width: 650px;
+        margin: 26px 0 0;
+        color: var(--muted);
+        font-size: clamp(16px, 1.5vw, 20px);
+        line-height: 1.65;
+      }
 
-/* Dark mode adjustments */
-:deep(.dark) .terminal-window {
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(20, 184, 166, 0.2),
-    0 0 40px rgba(20, 184, 166, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
+      .lead-main {
+        white-space: nowrap;
+      }
+
+      .lead-mobile {
+        display: none;
+      }
+
+      .lead-list {
+        display: grid;
+        gap: 8px;
+        max-width: 620px;
+        margin: 22px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .lead-list li {
+        display: flex;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.65;
+      }
+
+      .lead-list li::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 6px;
+        height: 6px;
+        margin-top: 11px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 34px;
+      }
+
+      .model-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 34px;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.025);
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .product {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #050607;
+        box-shadow: 0 34px 80px rgba(0, 0, 0, 0.42);
+        overflow: hidden;
+      }
+
+      .product-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 46px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--line);
+        color: #a8aca6;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .dots {
+        display: flex;
+        gap: 7px;
+      }
+
+      .dots span {
+        width: 10px;
+        height: 10px;
+        border: 1px solid var(--line-strong);
+        border-radius: 99px;
+      }
+
+      .product-body {
+        display: grid;
+        grid-template-columns: 180px 1fr 180px;
+        min-height: 390px;
+      }
+
+      .gateway-sidebar,
+      .inspector {
+        padding: 18px;
+        background: #08090a;
+      }
+
+      .gateway-sidebar {
+        border-right: 1px solid var(--line);
+      }
+
+      .inspector {
+        border-left: 1px solid var(--line);
+      }
+
+      .panel-title {
+        margin: 0 0 14px;
+        color: #9fa49e;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+
+      .menu-item,
+      .metric,
+      .log-row {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      .menu-item {
+        display: block;
+        margin-bottom: 8px;
+        padding: 10px;
+        color: #c1c5be;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        transition:
+          border-color 0.18s ease,
+          background 0.18s ease,
+          color 0.18s ease;
+      }
+
+      .menu-item.active {
+        border-color: rgba(20, 184, 166, 0.38);
+        background: var(--accent-soft);
+        color: var(--text);
+      }
+
+      .menu-item:hover,
+      .menu-item:focus-visible {
+        border-color: rgba(20, 184, 166, 0.48);
+        background: rgba(20, 184, 166, 0.11);
+        color: var(--text);
+        outline: none;
+      }
+
+      .workspace {
+        padding: 18px;
+      }
+
+      .command {
+        margin-bottom: 18px;
+        border: 1px solid rgba(20, 184, 166, 0.28);
+        border-radius: 8px;
+        background: #050607;
+        padding: 14px;
+        color: #f0f0e8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .accent {
+        color: var(--accent);
+      }
+
+      .log-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .log-row {
+        display: grid;
+        grid-template-columns: 58px 1fr 76px;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        color: #c7cac4;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .ok {
+        color: var(--accent);
+      }
+
+      .metric {
+        margin-bottom: 10px;
+        padding: 12px;
+      }
+
+      .metric strong {
+        display: block;
+        color: var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 18px;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 4px;
+        color: #a8aca6;
+        font-size: 12px;
+      }
+
+      section {
+        padding: 72px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 28px;
+        margin-bottom: 30px;
+      }
+.cyber-home h2 {
+        margin: 0;
+        color: #f2f1e9;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: clamp(28px, 3vw, 42px);
+        line-height: 1.08;
+      }
+
+      .section-copy {
+        max-width: 520px;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        min-height: 180px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.025);
+        padding: 24px;
+      }
+
+      .card .num {
+        color: #9fa49e;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .card h3 {
+        margin: 24px 0 10px;
+        color: var(--text);
+        font-size: 20px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+
+      .step {
+        border-top: 1px solid var(--line-strong);
+        padding-top: 18px;
+      }
+
+      .step .index {
+        color: var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+      }
+
+      .step h3 {
+        margin: 18px 0 8px;
+        color: var(--text);
+        font-size: 18px;
+      }
+
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .notice {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .purchase-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .qr-card {
+        display: grid;
+        grid-template-columns: 148px 1fr;
+        gap: 22px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.025);
+        padding: 18px;
+      }
+
+      .qr-frame {
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: #f7f7f2;
+        padding: 8px;
+      }
+
+      .qr-frame img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: contain;
+      }
+
+      .qr-card h3 {
+        margin: 0 0 10px;
+        color: var(--text);
+        font-size: 20px;
+      }
+
+      .qr-card p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .qr-card .mini {
+        color: #9fa49e;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        word-break: break-all;
+      }
+
+      .notice-item {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #111315;
+        padding: 22px;
+      }
+
+      .notice-item strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--warn);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+      }
+
+      .notice-item p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .enterprise {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 24px;
+        align-items: center;
+        border: 1px solid rgba(20, 184, 166, 0.3);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(255, 255, 255, 0.02));
+        padding: 30px;
+      }
+
+      .enterprise p {
+        max-width: 760px;
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 38px 0 54px;
+        color: #9fa49e;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      @media (max-width: 980px) {
+        .hero {
+          padding-top: 70px;
+        }
+
+        .hero-grid,
+        .product-body,
+        .enterprise {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head {
+          display: block;
+        }
+
+        .section-copy {
+          margin-top: 14px;
+        }
+
+        .product-body {
+          min-height: auto;
+        }
+
+        .gateway-sidebar,
+        .inspector {
+          display: none;
+        }
+
+        .cards,
+        .steps,
+        .notice,
+        .purchase-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .cyber-page {
+          width: min(100% - 28px, 1220px);
+        }
+
+        .nav {
+          height: auto;
+          padding: 18px 0;
+          align-items: flex-start;
+        }
+
+        .nav-links {
+          gap: 10px;
+        }
+
+        .nav-links a:not(.home-button) {
+          display: none;
+        }
+
+        .hero {
+          padding: 54px 0 48px;
+        }
+.cyber-home h1 {
+          font-size: 33px;
+        }
+.cyber-home h1 span {
+          white-space: normal;
+        }
+
+        .lead-main {
+          display: none;
+        }
+
+        .lead-mobile {
+          display: inline;
+        }
+
+        .log-row {
+          grid-template-columns: 48px 1fr;
+        }
+
+        .log-row span:last-child {
+          display: none;
+        }
+
+        .qr-card {
+          grid-template-columns: 112px 1fr;
+          gap: 14px;
+          padding: 14px;
+        }
+
+        footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
 </style>
