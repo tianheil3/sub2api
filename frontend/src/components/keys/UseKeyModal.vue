@@ -430,7 +430,7 @@ const powerShellDoubleQuoted = (value: string) => `"${value.replace(/[`"$]/g, '`
 
 function unixProfileScript(exports: Record<string, string>): string {
   const lines = Object.entries(exports).map(([key, value]) => `export ${key}="${doubleQuoteShell(value)}"`)
-  return `#!/usr/bin/env bash
+  return `bash <<'SUB2API_SETUP'
 set -e
 
 PROFILE="$HOME/.zshrc"
@@ -445,7 +445,8 @@ ${lines.join('\n')}
 EOF
 
 ${lines.join('\n')}
-echo "Sub2API configuration was added to $PROFILE and exported for this shell."`
+echo "Sub2API configuration was added to $PROFILE and exported for this shell."
+SUB2API_SETUP`
 }
 
 function cmdProfileScript(exports: Record<string, string>): string {
@@ -493,7 +494,7 @@ Write-Host "Codex configuration was written to $codexDir"`
 
   return {
     path: t('keys.useKeyModal.oneClick.unixPath'),
-    content: `#!/usr/bin/env bash
+    content: `bash <<'SUB2API_SETUP'
 set -e
 
 mkdir -p "$HOME/.codex"
@@ -504,7 +505,8 @@ cat > "$HOME/.codex/auth.json" <<'EOF'
 ${auth}
 EOF
 
-echo "Codex configuration was written to $HOME/.codex"`
+echo "Codex configuration was written to $HOME/.codex"
+SUB2API_SETUP`
   }
 }
 
@@ -518,14 +520,15 @@ EOF`
 
   return {
     path: t('keys.useKeyModal.oneClick.unixPath'),
-    content: `#!/usr/bin/env bash
+    content: `bash <<'SUB2API_SETUP'
 set -e
 
 CONFIG_DIR="$HOME/.config/opencode"
 mkdir -p "$CONFIG_DIR"
 ${writes}
 
-echo "OpenCode configuration was written to $CONFIG_DIR"`
+echo "OpenCode configuration was written to $CONFIG_DIR"
+SUB2API_SETUP`
   }
 }
 
