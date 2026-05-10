@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +20,7 @@ type ScheduledTestRunnerService struct {
 	scheduledSvc   *ScheduledTestService
 	accountTestSvc *AccountTestService
 	rateLimitSvc   *RateLimitService
+	accountRepo    AccountRepository
 	cfg            *config.Config
 
 	cron      *cron.Cron
@@ -31,6 +34,7 @@ func NewScheduledTestRunnerService(
 	scheduledSvc *ScheduledTestService,
 	accountTestSvc *AccountTestService,
 	rateLimitSvc *RateLimitService,
+	accountRepo AccountRepository,
 	cfg *config.Config,
 ) *ScheduledTestRunnerService {
 	return &ScheduledTestRunnerService{
@@ -38,6 +42,7 @@ func NewScheduledTestRunnerService(
 		scheduledSvc:   scheduledSvc,
 		accountTestSvc: accountTestSvc,
 		rateLimitSvc:   rateLimitSvc,
+		accountRepo:    accountRepo,
 		cfg:            cfg,
 	}
 }
@@ -135,6 +140,11 @@ func (s *ScheduledTestRunnerService) runOnePlan(ctx context.Context, plan *Sched
 		s.tryRecoverAccount(ctx, plan.AccountID, plan.ID)
 	}
 
+	// Auto-pause (mark schedulable=false) on 401/Unauthorized failures.
+	if result.Status == "failed" && plan.AutoDisableOnUnauth && isUnauthorizedError(result.ErrorMessage) {
+		s.tryDisableAccount(ctx, plan.AccountID, plan.ID, result.ErrorMessage)
+	}
+
 	nextRun, err := computeNextRun(plan.CronExpression, time.Now())
 	if err != nil {
 		logger.LegacyPrintf("service.scheduled_test_runner", "[ScheduledTestRunner] plan=%d computeNextRun error: %v", plan.ID, err)
@@ -167,4 +177,32 @@ func (s *ScheduledTestRunnerService) tryRecoverAccount(ctx context.Context, acco
 	if recovery.ClearedRateLimit {
 		logger.LegacyPrintf("service.scheduled_test_runner", "[ScheduledTestRunner] plan=%d auto-recover: account=%d cleared rate-limit/runtime state", planID, accountID)
 	}
+}
+
+// unauthorizedErrorPattern matches HTTP 401 / Unauthorized responses surfaced by upstream tests.
+// Examples it covers:
+//
+//	"HTTP 401: ..."
+//	"upstream returned 401 Unauthorized"
+//	"unauthorized"
+//	"invalid_api_key"
+var unauthorizedErrorPattern = regexp.MustCompile(`(?i)(^|[^0-9])401([^0-9]|$)|unauthor|invalid[ _-]?api[ _-]?key|invalid[ _-]?token|authentication[ _-]?failed`)
+
+func isUnauthorizedError(msg string) bool {
+	if strings.TrimSpace(msg) == "" {
+		return false
+	}
+	return unauthorizedErrorPattern.MatchString(msg)
+}
+
+// tryDisableAccount sets the account's schedulable flag to false so the gateway will skip it.
+func (s *ScheduledTestRunnerService) tryDisableAccount(ctx context.Context, accountID int64, planID int64, errMsg string) {
+	if s.accountRepo == nil {
+		return
+	}
+	if err := s.accountRepo.SetSchedulable(ctx, accountID, false); err != nil {
+		logger.LegacyPrintf("service.scheduled_test_runner", "[ScheduledTestRunner] plan=%d auto-disable failed: account=%d err=%v", planID, accountID, err)
+		return
+	}
+	logger.LegacyPrintf("service.scheduled_test_runner", "[ScheduledTestRunner] plan=%d auto-disable: account=%d paused (schedulable=false) reason=%q", planID, accountID, errMsg)
 }
