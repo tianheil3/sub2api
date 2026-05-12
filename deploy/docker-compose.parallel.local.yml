@@ -92,7 +92,7 @@ services:
     networks:
       - sub2api-parallel-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "-T", "5", "-O", "/dev/null", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; wget -q -T 5 -O /dev/null http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
