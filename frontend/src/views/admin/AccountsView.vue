@@ -152,6 +152,7 @@
           @select-page="selectPage"
           @toggle-schedulable="handleBulkToggleSchedulable"
           @test-selected="handleBulkTest"
+          @schedule-selected="handleBulkSchedule"
         />
         <div ref="accountTableRef" class="flex min-h-0 flex-1 flex-col overflow-hidden">
         <DataTable
@@ -321,6 +322,12 @@
       @close="closeBulkTestModal"
       @finished="reload"
     />
+    <AccountBulkScheduledTestsModal
+      :show="showBulkSchedule"
+      :account-ids="selIds"
+      @close="showBulkSchedule = false"
+      @created="reload"
+    />
     <AccountStatsModal :show="showStats" :account="statsAcc" @close="closeStatsModal" />
     <ScheduledTestsPanel :show="showSchedulePanel" :account-id="scheduleAcc?.id ?? null" :model-options="scheduleModelOptions" @close="closeSchedulePanel" />
     <AccountActionMenu :show="menu.show" :account="menu.acc" :position="menu.pos" @close="menu.show = false" @test="handleTest" @stats="handleViewStats" @schedule="handleSchedule" @reauth="handleReAuth" @refresh-token="handleRefresh" @recover-state="handleRecoverState" @reset-quota="handleResetQuota" @set-privacy="handleSetPrivacy" />
@@ -374,6 +381,7 @@ import ImportDataModal from '@/components/admin/account/ImportDataModal.vue'
 import ReAuthAccountModal from '@/components/admin/account/ReAuthAccountModal.vue'
 import AccountTestModal from '@/components/admin/account/AccountTestModal.vue'
 import AccountBulkTestModal from '@/components/admin/account/AccountBulkTestModal.vue'
+import AccountBulkScheduledTestsModal from '@/components/admin/account/AccountBulkScheduledTestsModal.vue'
 import AccountStatsModal from '@/components/admin/account/AccountStatsModal.vue'
 import ScheduledTestsPanel from '@/components/admin/account/ScheduledTestsPanel.vue'
 import type { SelectOption } from '@/components/common/Select.vue'
@@ -450,6 +458,7 @@ const showDeleteDialog = ref(false)
 const showReAuth = ref(false)
 const showTest = ref(false)
 const showBulkTest = ref(false)
+const showBulkSchedule = ref(false)
 const bulkTestAccounts = ref<Array<{ id: number; name: string; platform: string }>>([])
 const showStats = ref(false)
 const showErrorPassthrough = ref(false)
@@ -829,6 +838,7 @@ const isAnyModalOpen = computed(() => {
     showReAuth.value ||
     showTest.value ||
     showBulkTest.value ||
+    showBulkSchedule.value ||
     showStats.value ||
     showSchedulePanel.value ||
     showErrorPassthrough.value
@@ -1489,6 +1499,10 @@ const handleBulkTest = () => {
     .map((a) => ({ id: a.id, name: a.name, platform: a.platform }))
   if (bulkTestAccounts.value.length === 0) return
   showBulkTest.value = true
+}
+const handleBulkSchedule = () => {
+  if (selIds.value.length === 0) return
+  showBulkSchedule.value = true
 }
 const handleViewStats = (a: Account) => { statsAcc.value = a; showStats.value = true }
 const handleSchedule = async (a: Account) => {

@@ -530,7 +530,13 @@ type adminServiceImpl struct {
 	defaultSubAssigner   DefaultSubscriptionAssigner
 	userSubRepo          UserSubscriptionRepository
 	privacyClientFactory PrivacyClientFactory
+	scheduledTestSvc     *ScheduledTestService
 }
+
+const (
+	defaultScheduledTestCronExpression = "*/20 * * * *"
+	defaultScheduledTestMaxResults     = 50
+)
 
 type userGroupRateBatchReader interface {
 	GetByUserIDs(ctx context.Context, userIDs []int64) (map[int64]map[int64]float64, error)
@@ -555,6 +561,7 @@ func NewAdminService(
 	defaultSubAssigner DefaultSubscriptionAssigner,
 	userSubRepo UserSubscriptionRepository,
 	privacyClientFactory PrivacyClientFactory,
+	scheduledTestSvc *ScheduledTestService,
 ) AdminService {
 	return &adminServiceImpl{
 		userRepo:             userRepo,
@@ -574,6 +581,7 @@ func NewAdminService(
 		defaultSubAssigner:   defaultSubAssigner,
 		userSubRepo:          userSubRepo,
 		privacyClientFactory: privacyClientFactory,
+		scheduledTestSvc:     scheduledTestSvc,
 	}
 }
 
@@ -2425,6 +2433,10 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 		}
 	}
 
+	if err := s.createDefaultScheduledTestPlan(ctx, account.ID); err != nil {
+		return nil, err
+	}
+
 	// OAuth 账号：创建后异步设置隐私。
 	// 使用 Ensure（幂等）而非 Force：新建账号 Extra 为空时效果相同，但更安全。
 	if account.Type == AccountTypeOAuth {
@@ -2451,6 +2463,24 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 	}
 
 	return account, nil
+}
+
+func (s *adminServiceImpl) createDefaultScheduledTestPlan(ctx context.Context, accountID int64) error {
+	if s.scheduledTestSvc == nil {
+		return nil
+	}
+	_, err := s.scheduledTestSvc.CreatePlan(ctx, &ScheduledTestPlan{
+		AccountID:           accountID,
+		CronExpression:      defaultScheduledTestCronExpression,
+		Enabled:             true,
+		MaxResults:          defaultScheduledTestMaxResults,
+		AutoRecover:         true,
+		AutoDisableOnUnauth: true,
+	})
+	if err != nil {
+		return fmt.Errorf("create default scheduled test plan: %w", err)
+	}
+	return nil
 }
 
 func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *UpdateAccountInput) (*Account, error) {

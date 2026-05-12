@@ -76,6 +76,14 @@ services:
       - SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS=${PARALLEL_SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS:-}
 
       - UPDATE_PROXY_URL=${PARALLEL_UPDATE_PROXY_URL:-}
+      - HTTP_PROXY=${PARALLEL_HTTP_PROXY:-}
+      - HTTPS_PROXY=${PARALLEL_HTTPS_PROXY:-}
+      - ALL_PROXY=${PARALLEL_ALL_PROXY:-}
+      - http_proxy=${PARALLEL_HTTP_PROXY:-}
+      - https_proxy=${PARALLEL_HTTPS_PROXY:-}
+      - all_proxy=${PARALLEL_ALL_PROXY:-}
+      - NO_PROXY=${PARALLEL_NO_PROXY:-localhost,127.0.0.1,::1,postgres,redis}
+      - no_proxy=${PARALLEL_NO_PROXY:-localhost,127.0.0.1,::1,postgres,redis}
     depends_on:
       postgres:
         condition: service_healthy

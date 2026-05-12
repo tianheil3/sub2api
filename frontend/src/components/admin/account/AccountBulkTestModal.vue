@@ -175,7 +175,7 @@ const handleClose = () => {
   }
 }
 
-const cancelAll = () => {
+function cancelAll() {
   cancelled.value = true
   for (const c of controllers) {
     try {

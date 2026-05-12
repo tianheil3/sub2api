@@ -18,7 +18,7 @@ const scheduledTestDefaultMaxWorkers = 10
 type ScheduledTestRunnerService struct {
 	planRepo       ScheduledTestPlanRepository
 	scheduledSvc   *ScheduledTestService
-	accountTestSvc *AccountTestService
+	accountTestSvc scheduledAccountTester
 	rateLimitSvc   *RateLimitService
 	accountRepo    AccountRepository
 	cfg            *config.Config
@@ -26,6 +26,10 @@ type ScheduledTestRunnerService struct {
 	cron      *cron.Cron
 	startOnce sync.Once
 	stopOnce  sync.Once
+}
+
+type scheduledAccountTester interface {
+	RunTestBackground(ctx context.Context, accountID int64, modelID string) (*ScheduledTestResult, error)
 }
 
 // NewScheduledTestRunnerService creates a new runner.
