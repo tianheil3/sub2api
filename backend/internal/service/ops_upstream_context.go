@@ -48,7 +48,7 @@ func setOpsUpstreamRequestBody(c *gin.Context, body []byte) {
 	if c == nil || len(body) == 0 {
 		return
 	}
-	// 热路径避免 string(body) 额外分配，按需在落库前再转换。
+	// Hot path: avoid string(body) allocation until persistence needs it.
 	c.Set(OpsUpstreamRequestBodyKey, body)
 }
 
