@@ -734,7 +734,10 @@ model_auto_compact_token_limit = 360000
 name = "OpenAI"
 base_url = "${baseUrl}"
 wire_api = "responses"
-requires_openai_auth = true`
+requires_openai_auth = true
+
+[features]
+goals = true`
 
   // auth.json content
   const authContent = `{
@@ -777,7 +780,8 @@ supports_websockets = true
 requires_openai_auth = true
 
 [features]
-responses_websockets_v2 = true`
+responses_websockets_v2 = true
+goals = true`
 
   // auth.json content
   const authContent = `{
