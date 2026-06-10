@@ -169,7 +169,7 @@ func (s *createAccountScheduledRepoStub) SetRateLimited(ctx context.Context, id 
 	return nil
 }
 
-func (s *createAccountScheduledRepoStub) SetModelRateLimit(ctx context.Context, id int64, scope string, resetAt time.Time) error {
+func (s *createAccountScheduledRepoStub) SetModelRateLimit(ctx context.Context, id int64, scope string, resetAt time.Time, models ...string) error {
 	return nil
 }
 
@@ -214,6 +214,10 @@ func (s *createAccountScheduledRepoStub) IncrementQuotaUsed(ctx context.Context,
 }
 
 func (s *createAccountScheduledRepoStub) ResetQuotaUsed(ctx context.Context, id int64) error {
+	return nil
+}
+
+func (s *createAccountScheduledRepoStub) RevertProxyFallback(ctx context.Context, accountID int64) error {
 	return nil
 }
 
