@@ -252,6 +252,18 @@ func (s *scheduledRunnerAccountRepoStub) ListActive(ctx context.Context) ([]Acco
 	return nil, nil
 }
 
+func (s *scheduledRunnerAccountRepoStub) ListOAuthRefreshCandidates(ctx context.Context) ([]Account, error) {
+	return nil, nil
+}
+
+func (s *scheduledRunnerAccountRepoStub) RevertProxyFallback(ctx context.Context, accountID int64) error {
+	return nil
+}
+
+func (s *scheduledRunnerAccountRepoStub) UpdateSessionWindowEnd(ctx context.Context, id int64, end time.Time) error {
+	return nil
+}
+
 func (s *scheduledRunnerAccountRepoStub) ListByPlatform(ctx context.Context, platform string) ([]Account, error) {
 	return nil, nil
 }
@@ -323,7 +335,7 @@ func (s *scheduledRunnerAccountRepoStub) SetRateLimited(ctx context.Context, id 
 	return nil
 }
 
-func (s *scheduledRunnerAccountRepoStub) SetModelRateLimit(ctx context.Context, id int64, scope string, resetAt time.Time) error {
+func (s *scheduledRunnerAccountRepoStub) SetModelRateLimit(ctx context.Context, id int64, scope string, resetAt time.Time, models ...string) error {
 	return nil
 }
 

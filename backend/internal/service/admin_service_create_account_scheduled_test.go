@@ -101,6 +101,14 @@ func (s *createAccountScheduledRepoStub) ListActive(ctx context.Context) ([]Acco
 	return nil, nil
 }
 
+func (s *createAccountScheduledRepoStub) ListOAuthRefreshCandidates(ctx context.Context) ([]Account, error) {
+	return nil, nil
+}
+
+func (s *createAccountScheduledRepoStub) UpdateSessionWindowEnd(ctx context.Context, id int64, end time.Time) error {
+	return nil
+}
+
 func (s *createAccountScheduledRepoStub) ListByPlatform(ctx context.Context, platform string) ([]Account, error) {
 	return nil, nil
 }
