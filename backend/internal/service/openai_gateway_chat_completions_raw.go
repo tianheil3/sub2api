@@ -130,7 +130,7 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletions(
 		return nil, fmt.Errorf("account %d missing %s credential", account.ID, tokenKind)
 	}
 
-	targetURL, err := s.rawChatCompletionsURL(account)
+	targetURL, err := s.rawChatCompletionsURL(account, upstreamModel)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +164,9 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletions(
 		upstreamReq.Header.Set("user-agent", customUA)
 	} else if account.Platform == PlatformGrok {
 		upstreamReq.Header.Set("user-agent", "sub2api-grok/1.0")
+	}
+	if account.Platform == PlatformGrok {
+		xai.ApplyCLIHeaders(upstreamReq.Header, upstreamModel)
 	}
 
 	// 6. Send request
@@ -248,9 +251,9 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletions(
 	return s.bufferRawChatCompletions(c, resp, originalModel, billingModel, upstreamModel, reasoningEffort, serviceTier, startTime)
 }
 
-func (s *OpenAIGatewayService) rawChatCompletionsURL(account *Account) (string, error) {
+func (s *OpenAIGatewayService) rawChatCompletionsURL(account *Account, upstreamModel string) (string, error) {
 	if account.Platform == PlatformGrok {
-		targetURL, err := xai.BuildChatCompletionsURL(account.GetGrokBaseURL())
+		targetURL, err := xai.BuildChatCompletionsURL(xai.BaseURLForModel(account.GetGrokBaseURL(), upstreamModel))
 		if err != nil {
 			return "", fmt.Errorf("invalid grok base_url: %w", err)
 		}

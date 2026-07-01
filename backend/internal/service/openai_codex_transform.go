@@ -89,6 +89,7 @@ const (
 var openAIChatGPTInternalUnsupportedFields = []string{
 	"user",
 	"metadata",
+	"prompt_cache_key",
 	"prompt_cache_retention",
 	"safety_identifier",
 	"stream_options",
@@ -206,10 +207,8 @@ func applyCodexOAuthTransformWithOptions(reqBody map[string]any, opts codexOAuth
 
 	if v, ok := reqBody["prompt_cache_key"].(string); ok {
 		result.PromptCacheKey = strings.TrimSpace(v)
-		if isOpenAICompatMessagesBridgeRequestBody(reqBody) {
-			delete(reqBody, "prompt_cache_key")
-			result.Modified = true
-		}
+		delete(reqBody, "prompt_cache_key")
+		result.Modified = true
 	}
 
 	// 提取 input 中 role:"system" 消息至 instructions（OAuth 上游不支持 system role）。

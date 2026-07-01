@@ -101,6 +101,80 @@ func TestGrokQuotaServiceProbeUsageStoresHeaders(t *testing.T) {
 	require.NotNil(t, repo.updates[42][grokQuotaSnapshotExtraKey])
 }
 
+func TestGrokQuotaServiceProbeUsageNormalizesLegacyAliasMapping(t *testing.T) {
+	t.Parallel()
+
+	account := &Account{
+		ID:          47,
+		Platform:    PlatformGrok,
+		Type:        AccountTypeOAuth,
+		Concurrency: 1,
+		Credentials: map[string]any{
+			"access_token": "access-token",
+			"expires_at":   time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
+			"model_mapping": map[string]any{
+				"grok":        "grok",
+				"grok-latest": "grok-latest",
+				"grok-build":  "grok-build",
+			},
+		},
+	}
+	repo := &grokQuotaAccountRepo{
+		mockAccountRepoForPlatform: &mockAccountRepoForPlatform{
+			accountsByID: map[int64]*Account{47: account},
+		},
+	}
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{},
+		Body:       io.NopCloser(strings.NewReader(`{"id":"resp_probe"}`)),
+	}}
+	svc := NewGrokQuotaService(repo, nil, NewGrokTokenProvider(repo, nil), upstream)
+
+	_, err := svc.ProbeUsage(context.Background(), 47)
+
+	require.NoError(t, err)
+	require.Contains(t, string(upstream.lastBody), `"model":"grok-4.3"`)
+	require.NotContains(t, string(upstream.lastBody), `"model":"grok"`)
+}
+
+func TestGrokQuotaServiceProbeUsageRoutesCLIAliasesToCLIBaseURL(t *testing.T) {
+	t.Parallel()
+
+	account := &Account{
+		ID:          48,
+		Platform:    PlatformGrok,
+		Type:        AccountTypeOAuth,
+		Concurrency: 1,
+		Credentials: map[string]any{
+			"access_token": "access-token",
+			"expires_at":   time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
+			"base_url":     xai.DefaultBaseURL,
+			"model_mapping": map[string]any{
+				"grok": "grok-composer-2.5-fast",
+			},
+		},
+	}
+	repo := &grokQuotaAccountRepo{
+		mockAccountRepoForPlatform: &mockAccountRepoForPlatform{
+			accountsByID: map[int64]*Account{48: account},
+		},
+	}
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{},
+		Body:       io.NopCloser(strings.NewReader(`{"id":"resp_probe"}`)),
+	}}
+	svc := NewGrokQuotaService(repo, nil, NewGrokTokenProvider(repo, nil), upstream)
+
+	_, err := svc.ProbeUsage(context.Background(), 48)
+
+	require.NoError(t, err)
+	require.Equal(t, xai.DefaultCLIBaseURL+"/responses", upstream.lastReq.URL.String())
+	require.Equal(t, "0.2.22", upstream.lastReq.Header.Get("x-grok-client-version"))
+	require.Contains(t, string(upstream.lastBody), `"model":"grok-composer-2.5-fast"`)
+}
+
 func TestGrokQuotaServiceProbeUsageLoadsProxyWhenAccountEdgeMissing(t *testing.T) {
 	t.Parallel()
 

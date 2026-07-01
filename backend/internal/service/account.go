@@ -552,6 +552,9 @@ func (a *Account) resolveModelMapping(rawMapping map[string]any) map[string]stri
 				"gemini-3.1-pro-low",
 			})
 		}
+		if a.Platform == domain.PlatformGrok {
+			ensureGrokCanonicalAliases(result)
+		}
 		return result
 	}
 
@@ -614,6 +617,15 @@ func ensureAntigravityDefaultPassthrough(mapping map[string]string, model string
 func ensureAntigravityDefaultPassthroughs(mapping map[string]string, models []string) {
 	for _, model := range models {
 		ensureAntigravityDefaultPassthrough(mapping, model)
+	}
+}
+
+func ensureGrokCanonicalAliases(mapping map[string]string) {
+	if mapping == nil {
+		return
+	}
+	for alias, target := range xai.DefaultModelMapping() {
+		mapping[alias] = target
 	}
 }
 

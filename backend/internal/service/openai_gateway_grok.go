@@ -45,7 +45,7 @@ func (s *OpenAIGatewayService) forwardGrokResponses(
 
 	upstreamCtx, releaseUpstreamCtx := detachUpstreamContext(ctx)
 	defer releaseUpstreamCtx()
-	upstreamReq, err := buildGrokResponsesRequest(upstreamCtx, c, account, patchedBody, token)
+	upstreamReq, err := buildGrokResponsesRequest(upstreamCtx, c, account, patchedBody, token, upstreamModel)
 	if err != nil {
 		return nil, err
 	}
@@ -150,8 +150,8 @@ func patchGrokResponsesBody(body []byte, upstreamModel string) ([]byte, error) {
 	return out, nil
 }
 
-func buildGrokResponsesRequest(ctx context.Context, c *gin.Context, account *Account, body []byte, token string) (*http.Request, error) {
-	targetURL, err := xai.BuildResponsesURL(account.GetGrokBaseURL())
+func buildGrokResponsesRequest(ctx context.Context, c *gin.Context, account *Account, body []byte, token string, upstreamModel string) (*http.Request, error) {
+	targetURL, err := xai.BuildResponsesURL(xai.BaseURLForModel(account.GetGrokBaseURL(), upstreamModel))
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +163,7 @@ func buildGrokResponsesRequest(ctx context.Context, c *gin.Context, account *Acc
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("User-Agent", "sub2api-grok/1.0")
+	xai.ApplyCLIHeaders(req.Header, upstreamModel)
 	if c != nil {
 		if v := c.GetHeader("OpenAI-Beta"); strings.TrimSpace(v) != "" {
 			req.Header.Set("OpenAI-Beta", v)

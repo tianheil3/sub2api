@@ -50,7 +50,7 @@ func TestBuildGrokResponsesRequestUsesAccountBaseURLAndBearerToken(t *testing.T)
 		},
 	}
 
-	req, err := buildGrokResponsesRequest(context.Background(), nil, account, []byte(`{"model":"grok-4.3"}`), "access-token")
+	req, err := buildGrokResponsesRequest(context.Background(), nil, account, []byte(`{"model":"grok-4.3"}`), "access-token", "grok-4.3")
 	require.NoError(t, err)
 	require.Equal(t, http.MethodPost, req.Method)
 	require.Equal(t, "https://xai.test/v1/responses", req.URL.String())
@@ -74,9 +74,27 @@ func TestBuildGrokResponsesRequestRejectsUnsafeAccountBaseURL(t *testing.T) {
 		},
 	}
 
-	_, err := buildGrokResponsesRequest(context.Background(), nil, account, []byte(`{"model":"grok-4.3"}`), "access-token")
+	_, err := buildGrokResponsesRequest(context.Background(), nil, account, []byte(`{"model":"grok-4.3"}`), "access-token", "grok-4.3")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid base url")
+}
+
+func TestBuildGrokResponsesRequestRoutesComposerToCLIBaseURL(t *testing.T) {
+	account := &Account{
+		Platform: PlatformGrok,
+		Type:     AccountTypeOAuth,
+		Credentials: map[string]any{
+			"base_url": xai.DefaultBaseURL,
+		},
+	}
+
+	req, err := buildGrokResponsesRequest(context.Background(), nil, account, []byte(`{"model":"grok-composer-2.5-fast"}`), "access-token", "grok-composer-2.5-fast")
+	require.NoError(t, err)
+	require.Equal(t, xai.DefaultCLIBaseURL+"/responses", req.URL.String())
+	require.Equal(t, "grok-pager/0.2.22 grok-shell/0.2.22 (macos; aarch64)", req.Header.Get("User-Agent"))
+	require.Equal(t, "0.2.22", req.Header.Get("x-grok-client-version"))
+	require.Equal(t, "xai-grok-cli", req.Header.Get("x-xai-token-auth"))
+	require.Equal(t, "grok-composer-2.5-fast", req.Header.Get("x-grok-model-override"))
 }
 
 func TestForwardAsChatCompletionsForGrokUsesXAIChatCompletionsAndSnapshots(t *testing.T) {
@@ -202,6 +220,54 @@ func TestForwardGrokResponsesStreamingUsesXAIResponsesAndSnapshots(t *testing.T)
 	require.Contains(t, recorder.Header().Get("Content-Type"), "text/event-stream")
 	require.Contains(t, recorder.Body.String(), "response.output_text.delta")
 	require.NotNil(t, repo.updates[52][grokQuotaSnapshotExtraKey])
+}
+
+func TestForwardGrokResponsesComposerUsesCLIBaseURLForAPIBaseAccount(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	body := []byte(`{"model":"Composer 2.5 Fast","input":"hi","stream":true}`)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	account := &Account{
+		ID:          54,
+		Name:        "grok",
+		Platform:    PlatformGrok,
+		Type:        AccountTypeOAuth,
+		Concurrency: 1,
+		Credentials: map[string]any{
+			"access_token": "access-token",
+			"expires_at":   time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
+			"base_url":     xai.DefaultBaseURL,
+		},
+	}
+	repo := &grokQuotaAccountRepo{
+		mockAccountRepoForPlatform: &mockAccountRepoForPlatform{
+			accountsByID: map[int64]*Account{54: account},
+		},
+	}
+	upstreamBody := strings.Join([]string{
+		`data: {"type":"response.completed","sequence_number":1,"response":{"id":"resp_grok","model":"grok-composer-2.5-fast","usage":{"input_tokens":1,"output_tokens":1}}}`,
+		"",
+	}, "\n")
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
+		Body:       io.NopCloser(strings.NewReader(upstreamBody)),
+	}}
+	svc := &OpenAIGatewayService{
+		httpUpstream:      upstream,
+		grokTokenProvider: NewGrokTokenProvider(repo, nil),
+		accountRepo:       repo,
+	}
+
+	_, err := svc.forwardGrokResponses(context.Background(), c, account, body, "Composer 2.5 Fast", true, time.Now())
+	require.NoError(t, err)
+	require.Equal(t, xai.DefaultCLIBaseURL+"/responses", upstream.lastReq.URL.String())
+	require.Equal(t, "0.2.22", upstream.lastReq.Header.Get("x-grok-client-version"))
+	require.Equal(t, "grok-composer-2.5-fast", gjson.GetBytes(upstream.lastBody, "model").String())
 }
 
 func TestForwardAsChatCompletionsForGrokStreamingUsesRawXAIChatCompletions(t *testing.T) {

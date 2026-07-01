@@ -62,11 +62,12 @@ func (s *GrokQuotaService) ProbeUsage(ctx context.Context, accountID int64) (*Gr
 		return nil, err
 	}
 
-	body, err := buildGrokQuotaProbeBody(account)
+	probeModel := resolveGrokQuotaProbeModel(account)
+	body, err := buildGrokQuotaProbeBody(probeModel)
 	if err != nil {
 		return nil, infraerrors.Newf(http.StatusBadRequest, "GROK_QUOTA_PROBE_BODY_ERROR", "failed to build probe body: %v", err)
 	}
-	targetURL, err := xai.BuildResponsesURL(account.GetGrokBaseURL())
+	targetURL, err := xai.BuildResponsesURL(xai.BaseURLForModel(account.GetGrokBaseURL(), probeModel))
 	if err != nil {
 		return nil, infraerrors.Newf(http.StatusBadRequest, "GROK_QUOTA_BASE_URL_INVALID", "invalid Grok base_url: %v", err)
 	}
@@ -81,6 +82,7 @@ func (s *GrokQuotaService) ProbeUsage(ctx context.Context, accountID int64) (*Gr
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "sub2api-grok-quota-probe/1.0")
+	xai.ApplyCLIHeaders(req.Header, probeModel)
 
 	resp, err := s.httpUpstream.Do(req, proxyURL, account.ID, maxInt(account.Concurrency, 1))
 	if err != nil {
@@ -175,12 +177,19 @@ func (s *GrokQuotaService) loadGrokOAuthAccount(ctx context.Context, accountID i
 	return account, nil
 }
 
-func buildGrokQuotaProbeBody(account *Account) ([]byte, error) {
+func resolveGrokQuotaProbeModel(account *Account) string {
 	model := grokQuotaDefaultModel
 	if account != nil {
 		if mapped := strings.TrimSpace(account.GetMappedModel("grok")); mapped != "" {
 			model = mapped
 		}
+	}
+	return model
+}
+
+func buildGrokQuotaProbeBody(model string) ([]byte, error) {
+	if strings.TrimSpace(model) == "" {
+		model = grokQuotaDefaultModel
 	}
 	return json.Marshal(map[string]any{
 		"model":             model,

@@ -22,6 +22,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/pkg/geminicli"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/openai"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
 	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -184,6 +186,10 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 		return s.testOpenAIAccountConnection(c, account, modelID, prompt, normalizeAccountTestMode(mode))
 	}
 
+	if account.IsGrok() {
+		return s.testGrokAccountConnection(c, account, modelID)
+	}
+
 	if account.IsGemini() {
 		return s.testGeminiAccountConnection(c, account, modelID, prompt)
 	}
@@ -193,6 +199,82 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 	}
 
 	return s.testClaudeAccountConnection(c, account, modelID)
+}
+
+func (s *AccountTestService) testGrokAccountConnection(c *gin.Context, account *Account, modelID string) error {
+	ctx := c.Request.Context()
+
+	testModelID := strings.TrimSpace(modelID)
+	if testModelID == "" {
+		testModelID = grokQuotaDefaultModel
+	}
+	testModelID = account.GetMappedModel(testModelID)
+
+	authToken := account.GetGrokAccessToken()
+	if s.accountRepo != nil {
+		if token, err := NewGrokTokenProvider(s.accountRepo, nil).GetAccessToken(ctx, account); err == nil && strings.TrimSpace(token) != "" {
+			authToken = token
+		}
+	}
+	if strings.TrimSpace(authToken) == "" {
+		return s.sendErrorAndEnd(c, "No Grok access token available")
+	}
+
+	apiURL, err := xai.BuildResponsesURL(xai.BaseURLForModel(account.GetGrokBaseURL(), testModelID))
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Invalid Grok base URL: %s", err.Error()))
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Flush()
+
+	payload := createGrokTestPayload(testModelID)
+	payloadBytes, _ := json.Marshal(payload)
+	s.sendEvent(c, TestEvent{Type: "test_start", Model: testModelID})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return s.sendErrorAndEnd(c, "Failed to create Grok request")
+	}
+	req = req.WithContext(WithHTTPUpstreamProfile(req.Context(), HTTPUpstreamProfileOpenAI))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json, text/event-stream")
+	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("User-Agent", "sub2api-grok-test/1.0")
+	xai.ApplyCLIHeaders(req.Header, testModelID)
+
+	proxyURL := ""
+	if account.ProxyID != nil && account.Proxy != nil {
+		proxyURL = account.Proxy.URL()
+	}
+
+	var tlsProfile *tlsfingerprint.Profile
+	if s.tlsFPProfileService != nil {
+		tlsProfile = s.tlsFPProfileService.ResolveTLSProfile(account)
+	}
+	resp, err := s.httpUpstream.DoWithTLS(req, proxyURL, account.ID, account.Concurrency, tlsProfile)
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Grok request failed: %s", err.Error()))
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if s.accountRepo != nil {
+		if snapshot := xai.ParseQuotaHeaders(resp.Header, resp.StatusCode); snapshot != nil {
+			_ = s.accountRepo.UpdateExtra(ctx, account.ID, map[string]any{
+				grokQuotaSnapshotExtraKey: snapshot,
+			})
+		}
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Grok API returned %d: %s", resp.StatusCode, string(body)))
+	}
+
+	return s.processOpenAIStream(c, resp.Body)
 }
 
 // testClaudeAccountConnection tests an Anthropic Claude account's connection
@@ -1242,6 +1324,16 @@ func createOpenAITestPayload(modelID string, isOAuth bool) map[string]any {
 	payload["instructions"] = openai.DefaultInstructions
 
 	return payload
+}
+
+func createGrokTestPayload(modelID string) map[string]any {
+	return map[string]any{
+		"model":             modelID,
+		"input":             "hi",
+		"max_output_tokens": 64,
+		"stream":            true,
+		"store":             false,
+	}
 }
 
 func createOpenAIChatCompletionsTestPayload(modelID string, prompt string) map[string]any {
