@@ -214,7 +214,11 @@ func (s *AccountTestService) testGrokAccountConnection(c *gin.Context, account *
 	testModelID = account.GetMappedModel(testModelID)
 
 	authToken := account.GetGrokAccessToken()
-	if s.accountRepo != nil {
+	if s.grokTokenProvider != nil {
+		if token, err := s.grokTokenProvider.GetAccessToken(ctx, account); err == nil && strings.TrimSpace(token) != "" {
+			authToken = token
+		}
+	} else if s.accountRepo != nil {
 		if token, err := NewGrokTokenProvider(s.accountRepo, nil).GetAccessToken(ctx, account); err == nil && strings.TrimSpace(token) != "" {
 			authToken = token
 		}
