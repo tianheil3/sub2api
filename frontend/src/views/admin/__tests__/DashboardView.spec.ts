@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 
 import type { DashboardStats } from '@/types'
 import DashboardView from '../DashboardView.vue'
@@ -100,6 +101,8 @@ const createLegacyDashboardStats = (): DashboardStats => {
 
 describe('admin DashboardView', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
+
     getSnapshotV2.mockReset()
     getUserUsageTrend.mockReset()
     getUserSpendingRanking.mockReset()

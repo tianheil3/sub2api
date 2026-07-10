@@ -42,7 +42,7 @@
                   <p class="eyebrow">AI API relay for teams and builders</p>
                   <h1>
                     <span>统一接入</span>
-                    <span>GPT-5.5</span>
+                    <span>GPT-5.6</span>
                     <span>GPT Image 2</span>
                   </h1>
                   <p class="lead">
@@ -50,7 +50,7 @@
                     <span class="lead-mobile">注册、兑换、创建秘钥。</span>
                   </p>
                   <ul class="lead-list">
-                    <li>官方直转满血 GPT-5.5，支持 GPT Image 2 生图能力。</li>
+                    <li>官方直转满血 GPT-5.6，支持 GPT Image 2 生图能力。</li>
                     <li>OpenAI 兼容 API，可接入 Codex、Claude Code、opencode、Droid、Zed、龙虾 OpenClaw 等开发工具。</li>
                   </ul>
                   <div class="hero-actions">
@@ -59,7 +59,7 @@
                     <a class="home-button secondary" href="#flow">查看购买使用流程</a>
                   </div>
                   <div class="model-strip" aria-label="模型能力">
-                    <span class="pill">GPT-5.5 full</span>
+                    <span class="pill">GPT-5.6 full</span>
                     <span class="pill">GPT Image 2</span>
                     <span class="pill">Official relay</span>
                     <span class="pill">OpenAI-compatible API</span>
@@ -70,7 +70,7 @@
                 <div class="product" aria-label="产品界面预览">
                   <div class="product-top">
                     <div class="dots"><span></span><span></span><span></span></div>
-                    <span>cyberrelay / api-keys / gpt-5.5</span>
+                    <span>cyberrelay / api-keys / gpt-5.6</span>
                   </div>
                   <div class="product-body">
                     <aside class="gateway-sidebar">
@@ -84,10 +84,10 @@
                       <div class="command">
                         <span class="accent">curl</span> https://ai.cyberrelay.net/v1/chat/completions \<br />
                         &nbsp;&nbsp;-H "Authorization: Bearer sk-..." \<br />
-                        &nbsp;&nbsp;-d '{ "model": "gpt-5.5", "messages": [...] }'
+                        &nbsp;&nbsp;-d '{ "model": "gpt-5.6", "messages": [...] }'
                       </div>
                       <div class="log-list">
-                        <div class="log-row"><span class="ok">200</span><span>gpt-5.5 · chat completion</span><span>1.28s</span></div>
+                        <div class="log-row"><span class="ok">200</span><span>gpt-5.6 · chat completion</span><span>1.28s</span></div>
                         <div class="log-row"><span class="ok">200</span><span>gpt-image-2 · image generation</span><span>4.72s</span></div>
                         <div class="log-row"><span class="ok">200</span><span>sticky session · selected group</span><span>0.86s</span></div>
                         <div class="log-row"><span class="ok">200</span><span>quota check · 100刀 / 7天</span><span>0.19s</span></div>
@@ -114,8 +114,8 @@
               <div class="cards">
                 <article class="card">
                   <span class="num">01 / model</span>
-                  <h3>GPT-5.5 满血模型</h3>
-                  <p>支持最新 GPT-5.5 满血模型，官方直转，适合高质量推理、编码、内容生成和复杂任务。</p>
+                  <h3>GPT-5.6 满血模型</h3>
+                  <p>支持最新 GPT-5.6 满血模型，官方直转，适合高质量推理、编码、内容生成和复杂任务。</p>
                 </article>
                 <article class="card">
                   <span class="num">02 / image</span>
@@ -212,7 +212,7 @@
                 </div>
                 <div class="notice-item">
                   <strong>模型调用</strong>
-                  <p>GPT-5.5、GPT Image 2 等模型通过 OpenAI 兼容 API 对接，使用前请确认模型名和调用方式。</p>
+                  <p>GPT-5.6、GPT Image 2 等模型通过 OpenAI 兼容 API 对接，使用前请确认模型名和调用方式。</p>
                 </div>
                 <div class="notice-item">
                   <strong>配置优先级</strong>

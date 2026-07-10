@@ -71,6 +71,8 @@ func normalizeKnownOpenAICodexModel(model string) string {
 		return "gpt-5.6-terra"
 	case strings.Contains(normalized, "gpt-5.6-luna"):
 		return "gpt-5.6-luna"
+	case normalized == "gpt-5.6" || strings.Contains(normalized, "gpt-5.6-2026") || hasKnownCodexModelSuffix(normalized, "gpt-5.6"):
+		return "gpt-5.6"
 	case strings.Contains(normalized, "gpt-5.5-pro"):
 		return "gpt-5.5-pro"
 	case strings.Contains(normalized, "gpt-5.5"):
@@ -96,6 +98,11 @@ func normalizeKnownOpenAICodexModel(model string) string {
 	default:
 		return ""
 	}
+}
+
+func hasKnownCodexModelSuffix(model, prefix string) bool {
+	suffix, ok := strings.CutPrefix(model, prefix+"-")
+	return ok && isKnownCodexModelSuffix(suffix)
 }
 
 func appendUsageBillingModelCandidate(candidates []string, seen map[string]struct{}, model string) []string {

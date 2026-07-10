@@ -93,6 +93,10 @@ func (s *createAccountScheduledRepoStub) ListWithFilters(ctx context.Context, pa
 	return nil, nil, nil
 }
 
+func (s *createAccountScheduledRepoStub) ListAllWithFilters(ctx context.Context, platform, accountType, status, search string, groupID int64, privacyMode string) ([]Account, error) {
+	return nil, nil
+}
+
 func (s *createAccountScheduledRepoStub) ListByGroup(ctx context.Context, groupID int64) ([]Account, error) {
 	return nil, nil
 }
@@ -227,6 +231,10 @@ func (s *createAccountScheduledRepoStub) ResetQuotaUsed(ctx context.Context, id 
 
 func (s *createAccountScheduledRepoStub) RevertProxyFallback(ctx context.Context, accountID int64) error {
 	return nil
+}
+
+func (s *createAccountScheduledRepoStub) ListShadowsByParent(ctx context.Context, parentID int64) ([]*Account, error) {
+	return nil, nil
 }
 
 var _ AccountRepository = (*createAccountScheduledRepoStub)(nil)

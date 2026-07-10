@@ -244,6 +244,10 @@ func (s *scheduledRunnerAccountRepoStub) ListWithFilters(ctx context.Context, pa
 	return nil, nil, nil
 }
 
+func (s *scheduledRunnerAccountRepoStub) ListAllWithFilters(ctx context.Context, platform, accountType, status, search string, groupID int64, privacyMode string) ([]Account, error) {
+	return nil, nil
+}
+
 func (s *scheduledRunnerAccountRepoStub) ListByGroup(ctx context.Context, groupID int64) ([]Account, error) {
 	return nil, nil
 }
@@ -381,6 +385,10 @@ func (s *scheduledRunnerAccountRepoStub) IncrementQuotaUsed(ctx context.Context,
 
 func (s *scheduledRunnerAccountRepoStub) ResetQuotaUsed(ctx context.Context, id int64) error {
 	return nil
+}
+
+func (s *scheduledRunnerAccountRepoStub) ListShadowsByParent(ctx context.Context, parentID int64) ([]*Account, error) {
+	return nil, nil
 }
 
 var _ AccountRepository = (*scheduledRunnerAccountRepoStub)(nil)

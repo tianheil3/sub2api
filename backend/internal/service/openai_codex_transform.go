@@ -9,6 +9,7 @@ import (
 )
 
 var codexModelMap = map[string]string{
+	"gpt-5.6":              "gpt-5.6",
 	"gpt-5.6-sol":          "gpt-5.6-sol",
 	"gpt-5.6-terra":        "gpt-5.6-terra",
 	"gpt-5.6-luna":         "gpt-5.6-luna",
@@ -60,6 +61,7 @@ var codexVersionModelPrefixes = []struct {
 	{prefix: "gpt-5.6-sol", target: "gpt-5.6-sol"},
 	{prefix: "gpt-5.6-terra", target: "gpt-5.6-terra"},
 	{prefix: "gpt-5.6-luna", target: "gpt-5.6-luna"},
+	{prefix: "gpt-5.6", target: "gpt-5.6"},
 	{prefix: "gpt-5.3-codex-spark", target: "gpt-5.3-codex-spark"},
 	{prefix: "gpt-5.3-codex", target: "gpt-5.3-codex"},
 	{prefix: "gpt-5.4-mini", target: "gpt-5.4-mini"},
@@ -155,6 +157,12 @@ func applyCodexOAuthTransformWithOptions(reqBody map[string]any, opts codexOAuth
 		}
 	}
 
+	if v, ok := reqBody["prompt_cache_key"].(string); ok {
+		result.PromptCacheKey = strings.TrimSpace(v)
+		delete(reqBody, "prompt_cache_key")
+		result.Modified = true
+	}
+
 	// Strip parameters unsupported by ChatGPT internal Codex endpoint.
 	for _, key := range openAICodexOAuthUnsupportedFields {
 		if _, ok := reqBody[key]; ok {
@@ -206,12 +214,6 @@ func applyCodexOAuthTransformWithOptions(reqBody map[string]any, opts codexOAuth
 		result.Modified = true
 	}
 	if normalizeCodexToolChoice(reqBody) {
-		result.Modified = true
-	}
-
-	if v, ok := reqBody["prompt_cache_key"].(string); ok {
-		result.PromptCacheKey = strings.TrimSpace(v)
-		delete(reqBody, "prompt_cache_key")
 		result.Modified = true
 	}
 
@@ -592,8 +594,14 @@ func isCodexSparkModel(model string) bool {
 }
 
 func hasOpenAIImageGenerationTool(reqBody map[string]any) bool {
-	rawTools, ok := reqBody["tools"]
-	if !ok || rawTools == nil {
+	if toolsContainImageGeneration(reqBody["tools"]) {
+		return true
+	}
+	return inputContainsImageGenNamespace(reqBody["input"])
+}
+
+func toolsContainImageGeneration(rawTools any) bool {
+	if rawTools == nil {
 		return false
 	}
 	tools, ok := rawTools.([]any)
@@ -606,6 +614,34 @@ func hasOpenAIImageGenerationTool(reqBody map[string]any) bool {
 			continue
 		}
 		if strings.TrimSpace(firstNonEmptyString(toolMap["type"])) == "image_generation" {
+			return true
+		}
+		if isImageGenNamespaceToolMap(toolMap) {
+			return true
+		}
+	}
+	return false
+}
+
+func isImageGenNamespaceToolMap(tool map[string]any) bool {
+	return strings.TrimSpace(firstNonEmptyString(tool["type"])) == "namespace" &&
+		strings.TrimSpace(firstNonEmptyString(tool["name"])) == "image_gen"
+}
+
+func inputContainsImageGenNamespace(rawInput any) bool {
+	input, ok := rawInput.([]any)
+	if !ok {
+		return false
+	}
+	for _, rawItem := range input {
+		item, ok := rawItem.(map[string]any)
+		if !ok {
+			continue
+		}
+		if strings.TrimSpace(firstNonEmptyString(item["type"])) != "additional_tools" {
+			continue
+		}
+		if toolsContainImageGeneration(item["tools"]) {
 			return true
 		}
 	}
